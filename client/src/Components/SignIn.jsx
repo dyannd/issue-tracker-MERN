@@ -26,7 +26,7 @@ function SignIn(props) {
         email: email,
         password: password
       },
-      url: "http://localhost:8888/api/login",
+      url: "/api/login",
       withCredentials: true
     }).then(res => {
       console.log(res);
@@ -54,7 +54,7 @@ function SignIn(props) {
         password: password,
         password2: password2
       },
-      url: "http://localhost:8888/api/register",
+      url: "/api/register",
       withCredentials: true
     }).then(res => {
       setIsLoading(false);

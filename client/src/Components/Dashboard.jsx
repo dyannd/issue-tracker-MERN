@@ -41,7 +41,7 @@ function Dashboard(props) {
             async function getNewToken() {
                 if (decodedToken.exp * 1000 < currentDate.getTime()) {
                     await axios({
-                        url: "http://localhost:8888/api/refresh",
+                        url: "/api/refresh",
                         method: "POST",
                         withCredentials: true
                     }).then((res) => {
@@ -175,7 +175,7 @@ function Dashboard(props) {
                         Authorization: "Bearer " + localStorage.getItem("accessToken"),
                     },
                     //get token from user data's accessToken
-                    url: "http://localhost:8888/api/dashboard",
+                    url: "/api/dashboard",
                     method: "GET",
                     withCredentials: true
                 }).then((res) => {
@@ -210,7 +210,7 @@ function Dashboard(props) {
                     Authorization: "Bearer " + localStorage.getItem("accessToken"),
                 },
                 method: "POST",
-                url: "http://localhost:8888/api/logout",
+                url: "/api/logout",
                 withCredentials: true,
             }).then(res => {
                 setIsLoadingLogOut(false);
@@ -237,7 +237,7 @@ function Dashboard(props) {
                     Authorization: "Bearer " + localStorage.getItem("accessToken"),
                 },
                 method: "GET",
-                url: "http://localhost:8888/api/getProject/" + id,
+                url: "/api/getProject/" + id,
                 withCredentials: true,
             }).then(res => {
                 setCurrentIssue(null);
@@ -266,7 +266,7 @@ function Dashboard(props) {
                     Authorization: "Bearer " + localStorage.getItem("accessToken"),
                 },
                 method: "GET",
-                url: "http://localhost:8888/api/getIssue/" + id,
+                url: "/api/getIssue/" + id,
                 withCredentials: true,
             }).then(res => {
                 setIsLoadingIssue(false);
@@ -298,7 +298,7 @@ function Dashboard(props) {
                 data: {
                     projectName: newProjectName
                 },
-                url: "http://localhost:8888/api/createProject",
+                url: "/api/createProject",
                 withCredentials: true,
             }).then(res => {
                 setIsLoadingProject(false);
@@ -328,7 +328,7 @@ function Dashboard(props) {
                     projectId: id,
                     projectName: newName
                 },
-                url: "http://localhost:8888/api/modifyProject",
+                url: "/api/modifyProject",
                 withCredentials: true,
             }).then(res => {
                 setIsLoadingProject(false);
@@ -359,7 +359,7 @@ function Dashboard(props) {
                     data: {
                         projectId: id
                     },
-                    url: "http://localhost:8888/api/deleteProject",
+                    url: "/api/deleteProject",
                     withCredentials: true,
                 }).then(res => {
                     setIsLoadingProject(false);
@@ -399,7 +399,7 @@ function Dashboard(props) {
                     issueSolved: newIssueSolved,
                     projectId: currentProject._id
                 },
-                url: "http://localhost:8888/api/createIssue",
+                url: "/api/createIssue",
                 withCredentials: true,
             }).then(res => {
                 setIsLoadingIssue(false);
@@ -440,7 +440,7 @@ function Dashboard(props) {
                     issueId: id,
                     projectId: currentProject._id
                 },
-                url: "http://localhost:8888/api/modifyIssue",
+                url: "/api/modifyIssue",
                 withCredentials: true,
             }).then(res => {
                 setIsLoadingIssue(false);
@@ -472,7 +472,7 @@ function Dashboard(props) {
                         issueId: id,
                         projectId: currentProject._id
                     },
-                    url: "http://localhost:8888/api/deleteIssue",
+                    url: "/api/deleteIssue",
                     withCredentials: true,
                 }).then(res => {
                     setIsLoadingIssue(false);
@@ -505,7 +505,7 @@ function Dashboard(props) {
                     addedRole: addedRole,
                     projectId: id,
                 },
-                url: "http://localhost:8888/api/addUserToProject",
+                url: "/api/addUserToProject",
                 withCredentials: true,
             }).then(res => {
                 setIsLoadingProject(false);
@@ -535,7 +535,7 @@ function Dashboard(props) {
                         deletedId: userId,
                         projectId: projectId,
                     },
-                    url: "http://localhost:8888/api/deleteUserFromProject",
+                    url: "/api/deleteUserFromProject",
                     withCredentials: true,
                 }).then(res => {
                     setIsLoadingProject(false);
@@ -569,7 +569,7 @@ function Dashboard(props) {
                     projectId: projectId,
                     addedUserId: addedId
                 },
-                url: "http://localhost:8888/api/assignUserToIssue",
+                url: "/api/assignUserToIssue",
                 withCredentials: true,
             }).then(res => {
                 setIsLoadingIssue(false);
@@ -602,7 +602,7 @@ function Dashboard(props) {
                         projectId: projectId,
                         removedUserId: removedId
                     },
-                    url: "http://localhost:8888/api/removeUserFromIssue",
+                    url: "/api/removeUserFromIssue",
                     withCredentials: true,
                 }).then(res => {
                     setIsLoadingIssue(false);

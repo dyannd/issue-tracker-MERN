@@ -376,12 +376,19 @@ router.delete("/deleteIssue", verify, (req, res) => {
                         const index = project.issues.indexOf(mongoose.Types.ObjectId(req.body.issueId));
                         project.issues.splice(index, 1)
                         project.save()
-                            .then(
-                                //delete the issue itself
-                                Issue.findByIdAndDelete(req.body.issueId)
-                                .populate('users', 'name email')
-                                .then(issue => res.status(200).json(issue))
-                                .catch(err1 => res.status(400).json(err1)))
+                            .then(proj => {
+                                proj
+                                    .populate('admins', 'name email')
+                                    .populate('users', 'name email')
+                                    .populate('issues')
+                                    .execPopulate()
+                                    .then(returnProject => {
+                                        //delete the issue itself
+                                        Issue.findByIdAndDelete(req.body.issueId)
+                                            .then(res.status(200).json(returnProject))
+                                            .catch(err1 => res.status(400).json(err1))
+                                    })
+                            })
                     } else {
                         res.status(403).json("You are not the admin")
                     }

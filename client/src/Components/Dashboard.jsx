@@ -476,8 +476,10 @@ function Dashboard(props) {
                     withCredentials: true,
                 }).then(res => {
                     setIsLoadingIssue(false);
-                    if (res.status === 200) {
-                        setCurrentIssue(res.data);
+                    if (res.status === 200) {                   
+                        setCurrentProject(res.data);  
+                        setCurrentIssueList(res.data.issues); 
+                        setCurrentIssue(null);                                
                         console.log("Deleted issue successfully!")
                     }
                 }).catch(error => {

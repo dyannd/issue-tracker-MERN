@@ -10,17 +10,19 @@ function DisplayProject(props) {
     const { admins, users, currentUser } = props;
 
 
-    //converting the date from the db to client's current timezone
-    const unixTime = Date.parse(date);
-    const clientDate = new Date();
-    clientDate.setTime(unixTime);
-    function getMMDDYYYY(date) {
-        var month = date.getMonth() + 1;
-        var day = date.getDate();
-        var year = date.getFullYear();
-        return month + '/' + day + '/' + year
-    }
+    //function to convert string date to mmddyyyy
+    function getMMDDYYYY(dateString) {
+        const unixTime = Date.parse(dateString);
+        const dateObject = new Date();
+        dateObject.setTime(unixTime);
 
+        const month = dateObject.getMonth() + 1;
+        const day = dateObject.getDate();
+        const year = dateObject.getFullYear();
+        const hour = dateObject.getHours();
+        const min = dateObject.getMinutes();
+        return month + '/' + day + '/' + year + " at " + hour + ":" + (min < 10 ? "0" + min : min)
+    }
     //for handling the edited name of the project
     function handleEditConfirm(evt) {
         evt.preventDefault();
@@ -63,17 +65,17 @@ function DisplayProject(props) {
                             </form>
                         </h5>
                         : <h5 onClick={handleClick}>{name}</h5>}
-                    <p onClick={handleClick}>{getMMDDYYYY(clientDate)}</p>
+                    <p onClick={handleClick}> Created:{" "}{getMMDDYYYY(date)}</p>
                 </div>
                 <div className="icon-wrapper" >
                     {props.clicked ?
                         <>
-                            <i className="far fa-trash-alt" onClick={() => props.handleDelete(_id)} >
-
+                            <i className="far fa-trash-alt"
+                                onClick={() => props.handleDelete(_id)} >
                             </i>
                             <i className="far fa-edit"
                                 onClick={() => setIsClickedEdit(prev => !prev)}
-                                style={{ color: isClickedEdit ? "#78C233" : "" }}></i>
+                                style={{ color: isClickedEdit ? "#77a186" : "" }}></i>
                             <i className="fas fa-users"
                                 id="projectUsersToggler"
                                 data-toggle="collapse"
@@ -149,7 +151,7 @@ function DisplayProject(props) {
                         <div className="content-section" style={{ margin: "0.15rem 0" }}>
                             <p>
                                 <span style={{
-                                    background: "#1B1C30", color: "#B1BAC7", padding: "0.2rem 0.5rem",
+                                    background: "#12111a", color: "#B1BAC7", padding: "0.2rem 0.5rem",
                                     marginRight: "0.3rem", borderRadius: "10px"
                                 }}>
                                     Participant

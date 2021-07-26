@@ -1,94 +1,97 @@
-.signin-screen{
-    background-color: #1B1C30;
+.signin-screen {
+    background-color: #12111a;
     min-height: 100vh;
     overflow: hidden;
     font-family: "Mulish", sans-serif;
 }
 
-
-.signin-form-wrapper{
-    padding:0 10%;
-    min-height:100vh;
-    display:flex;
+.signin-form-wrapper {
+    padding: 0 10%;
+    min-height: 100vh;
+    display: flex;
     align-items: center;
 }
 
-.signin-form{
-    margin:auto;
-    width:30rem;
-    background-color:#26273B;
-    padding:5% 5%;
-    color:#AFBCC4;
+.signin-form {
+    margin: auto;
+    width: 30rem;
+    background-color: #191c32;
+    padding: 5% 5%;
+    color: #B1BAC7;
     text-align: center;
     border-radius: 20px;
 }
 
-.signcomponent{
-    width:100%;
-    padding:1% 2%;
+.signcomponent {
+    width: 100%;
+    padding: 1% 2%;
     font-size: 0.8rem;
-    margin:0.5rem 0;
+    margin: 0.5rem 0;
     background: transparent;
-    border:none;
-    border-left:solid;
-    border-color:#AFBCC4;
-    color:#AFBCC4;
+    border: none;
+    border-left: solid;
+    border-color: #B1BAC7;
+    color: #B1BAC7;
     transition: all 0.5s;
 }
 
-.error-text{
-font-size:0.7rem;
+.error-text {
+    font-size: 0.7rem;
 }
 
-.signcomponent:focus{
-    border-color:#91DEFB ;
-    outline:none;
+.signcomponent:focus {
+    border-color: #91DEFB;
+    outline: none;
 }
 
 input:-webkit-autofill {
-    transition: background-color 1s ;
+    transition: background-color 1s;
 }
 
-.button-wrapper{
-    display:flex;
+.button-wrapper {
+    display: flex;
     justify-content: space-between;
-    width:100%;
+    width: 100%;
 }
 
-.function-button{
-    width:7rem;
-    border:none;
-    color:#303636;
-    background:linear-gradient(to right,#ABE9F0 50%, #BCE6FE 100% );
-    padding:1%;
+.function-button {
+    width: 7rem;
+    border: none;
+    color: #303636;
+    background: linear-gradient(to right, #ABE9F0 50%, #BCE6FE 100%);
+    padding: 1%;
     font-weight: bold;
-    margin:0.5rem 0;
+    margin: 0.5rem 0;
 }
 
-.switcher-text{
+.switcher-text {
     font-size: 0.8rem;
-    margin:auto;
+    margin: auto;
     margin-left: 0;
 }
 
-.click-text{
-    cursor:pointer;
-    color:#91DEFB;
+.click-text {
+    cursor: pointer;
+    color: #91DEFB;
 }
 
-.loader-signin{
-    margin:auto;
-    border: 0.2rem solid #FFFFFF; /* Light grey */
-    border-top: 0.2rem solid #1F1F1F; /* Blue */
+.loader-signin {
+    margin: auto;
+    border: 0.2rem solid #FFFFFF;
+    /* Light grey */
+    border-top: 0.2rem solid #1F1F1F;
+    /* Blue */
     border-radius: 50%;
-    width:1.5rem;
-    height:1.5rem;
-    animation: spin 2s  infinite;
+    width: 1.5rem;
+    height: 1.5rem;
+    animation: spin 2s infinite;
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-
-
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}

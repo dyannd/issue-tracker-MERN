@@ -22,6 +22,7 @@ function Dashboard(props) {
     const [newIssueDescription, setNewIssueDescription] = React.useState("");
     const [newIssuePriority, setNewIssuePriority] = React.useState("");
     const [newIssueSolved, setNewIssueSolved] = React.useState("");
+    const [newIssueDeadline, setNewIssueDeadline] = React.useState("");
     const [isLoadingIssue, setIsLoadingIssue] = React.useState(false);
     const [isLoadingProject, setIsLoadingProject] = React.useState(false);
     const [isLoadingLogOut, setIsLoadingLogOut] = React.useState(false);
@@ -90,6 +91,27 @@ function Dashboard(props) {
             return 0
         }
 
+        function compareDeadSoonest(issueA, issueB) {
+            const dateA = issueA.deadline !== undefined ?Date.parse(issueA.deadline) : Date.parse(issueA.date) + 1000000000;
+            const dateB = issueB.deadline !== undefined ?Date.parse(issueB.deadline) : Date.parse(issueB.date)  + 1000000000;
+            if (dateA < dateB) return -1
+            if (dateA > dateB) return 1
+            return 0
+        }
+
+
+        function compareDeadLongest(issueA, issueB) {
+            const dateA = new Date(issueA.deadline);
+            const dateB = new Date(issueB.deadline);
+            if (dateA < dateB) return 1
+            if (dateA > dateB) return -1
+            return 0
+        }
+
+        
+
+
+
         //default, sort by unsolved -> done
         function compareSolvedDes(issueA, issueB) {
             const solA = issueA.solved === "Unsolved" ? 2 : issueA.solved === "In Progress" ? 1 : 0;
@@ -113,13 +135,13 @@ function Dashboard(props) {
             const priB = issueB.priority === "High" ? 2 : issueB.priority === "Medium" ? 1 : 0;
             if (priA < priB) return -1
             if (priA > priB) return 1
-            //if same priority, sort higher state first (unsolved -> done)
+            //if same priority, sort longer deadlines first
             if (priA === priB) {
-                if (compareSolvedAs(issueA, issueB) === 0) {
+                if (compareDeadLongest(issueA, issueB) === 0) {
                     //if same state, sort by ascending date
-                    return compareDateDes(issueA, issueB);
-                } else {
                     return compareSolvedAs(issueA, issueB);
+                } else {
+                    return compareDeadLongest(issueA, issueB);
                 }
             }
         }
@@ -132,11 +154,11 @@ function Dashboard(props) {
             if (priA > priB) return -1
             //if same priority, sort oldest dates first (ascending)
             if (priA === priB) {
-                if (compareSolvedDes(issueA, issueB) === 0) {
-                    //if same state, sort by ascending date
-                    return compareDateAs(issueA, issueB);
-                } else {
+                if (compareDeadSoonest(issueA, issueB) === 0) {
+                    //if same deadline, sort by ascending state
                     return compareSolvedDes(issueA, issueB);
+                } else {
+                    return compareDeadSoonest(issueA, issueB);
                 }
             }
         }
@@ -155,6 +177,8 @@ function Dashboard(props) {
             } else if (sortValue === "pri-des") {
                 //if reverse the array, the date will also get descended, so must make a new compare function!
                 return sorted.sort(comparePriorityDes);
+            }else if (sortValue === "end-des"){
+                return sorted.sort(compareDeadSoonest);
             }
         }
         const newIssueArray = sortingIssue();
@@ -397,6 +421,7 @@ function Dashboard(props) {
                     issueDescription: newIssueDescription,
                     issuePriority: newIssuePriority,
                     issueSolved: newIssueSolved,
+                    issueDeadline: newIssueDeadline,
                     projectId: currentProject._id
                 },
                 url: "/api/createIssue",
@@ -423,7 +448,7 @@ function Dashboard(props) {
     };
 
     //EDITING A CURRENT ISSUE
-    async function handleEditIssue(title, des, priority, solved, id) {
+    async function handleEditIssue(title, des, priority, solved, deadline, id) {
         setIsLoadingIssue(true);
         await checkExpiry();
         if (localStorage.getItem("accessToken")) {
@@ -438,6 +463,7 @@ function Dashboard(props) {
                     issuePriority: priority,
                     issueSolved: solved,
                     issueId: id,
+                    issueDeadline: deadline,
                     projectId: currentProject._id
                 },
                 url: "/api/modifyIssue",
@@ -476,10 +502,10 @@ function Dashboard(props) {
                     withCredentials: true,
                 }).then(res => {
                     setIsLoadingIssue(false);
-                    if (res.status === 200) {                   
-                        setCurrentProject(res.data);  
-                        setCurrentIssueList(res.data.issues); 
-                        setCurrentIssue(null);                                
+                    if (res.status === 200) {
+                        setCurrentProject(res.data);
+                        setCurrentIssueList(res.data.issues);
+                        setCurrentIssue(null);
                         console.log("Deleted issue successfully!")
                     }
                 }).catch(error => {
@@ -624,6 +650,65 @@ function Dashboard(props) {
         }
     }
 
+    async function handleAddComment(issueId, comment){
+        setIsLoadingIssue(true)
+        await checkExpiry();
+        if (localStorage.getItem("accessToken")) {
+            axios({
+                headers: {
+                    Authorization: "Bearer " + localStorage.getItem("accessToken"),
+                },
+                method: "POST",
+                data: {
+                    issueId: issueId,
+                   commentDetail: comment
+                },
+                url: "/api/addCommentToIssue",
+                withCredentials: true,
+            }).then(res => {
+                setIsLoadingIssue(false);
+                if (res.status === 200) {
+                    setCurrentIssue(res.data)
+                    console.log("Added comment!")
+                }
+            }).catch(error => {
+                setIsLoadingIssue(false);
+                console.log(error.response.data);
+                setDisplayError(error.response.data);
+            })
+        }
+    }
+
+    async function handleDeleteComment(issueId, projectId, commentId){
+        setIsLoadingIssue(true)
+        await checkExpiry();
+        if (localStorage.getItem("accessToken")) {
+            axios({
+                headers: {
+                    Authorization: "Bearer " + localStorage.getItem("accessToken"),
+                },
+                method: "DELETE",
+                data: {
+                    issueId: issueId,
+                   projectId: projectId,
+                   commentId: commentId
+                },
+                url: "/api/deleteCommentFromIssue",
+                withCredentials: true,
+            }).then(res => {
+                setIsLoadingIssue(false);
+                if (res.status === 200) {
+                    setCurrentIssue(res.data)
+                    console.log(res.data)
+                    console.log("Deleted comment!")
+                }
+            }).catch(error => {
+                setIsLoadingIssue(false);
+                console.log(error.response.data);
+                setDisplayError(error.response.data);
+            })
+        }
+    }
     return (
         <div >
             {isAuthenticated && currentUser ?
@@ -684,12 +769,12 @@ function Dashboard(props) {
                                 <h4>Issues:
                                     {currentIssue ?
                                         <button className="function-button"
-                                            style={{ margin: "0", fontSize: "0.8rem", width: "3rem", marginLeft: "0.5rem" }}
+                                            style={{ margin: "0", fontSize: "0.8rem", width: "4.5rem", marginLeft: "0.5rem" }}
                                             onClick={() => {
                                                 setCurrentIssue(null);
                                                 handleClickOnProject(currentProject._id);
                                             }}>
-                                            Back
+                                            All issues
                                         </button> : null}
                                     {isLoadingIssue ? <div className="loader"></div> : null}
                                 </h4>
@@ -707,17 +792,18 @@ function Dashboard(props) {
                                                 defaultValue={""}
                                                 style={{ margin: "0", padding: "0 0.5rem" }}>
                                                 <option value="" disabled>Sort by</option>
-                                                <option value="date-as">Date - oldest (default)</option>
-                                                <option value="date-des">Date - latest </option>
+                                                <option value="date-as" defaultValue>Oldest (default)</option>
+                                                <option value="date-des">Newest </option>
                                                 <option value="pri-as">Priority - lowest</option>
                                                 <option value="pri-des">Priority - highest </option>
+                                                {/* <option value="end-des">Ending soonest</option> */}
                                             </select>
                                             <span className="select-arrow ">
                                                 <i className="fas fa-long-arrow-alt-down"></i>
                                             </span>
                                         </div>
                                         <button className="function-button"
-                                            style={{ fontSize: "0.7rem", margin: "0 0.3rem", width:"5rem" }}
+                                            style={{ fontSize: "0.7rem", margin: "0 0.3rem", width: "5rem" }}
                                             onClick={() => setShowDone(prev => !prev)}>
                                             {!showDone ? "Show done" : "Hide done"}
                                         </button>
@@ -771,7 +857,12 @@ function Dashboard(props) {
                                                 <i className="fas fa-long-arrow-alt-down"></i>
                                             </span>
                                         </div>
-
+                                        <div className="select-wrapper date-select">
+                                            <input type="datetime-local"
+                                                onChange={evt => setNewIssueDeadline(evt.target.value)}>
+                                            </input>
+                                            <i className="far fa-calendar-alt"></i>
+                                        </div>
                                         <button className="function-button button-submit" type="submit">Add</button>
                                     </form>
                                 </div>}
@@ -786,6 +877,8 @@ function Dashboard(props) {
                                     handleClick={handleClickOnIssue}
                                     handleDelete={handleDeleteIssue}
                                     handleEdit={handleEditIssue}
+                                    handleAddComment={handleAddComment}
+                                    handleDeleteComment={handleDeleteComment}
                                 /> :
                                 currentProject ? showDone ? currentIssueList.map(issue =>
                                     <>

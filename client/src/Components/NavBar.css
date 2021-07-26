@@ -1,31 +1,29 @@
-.navbar{
-    background-color:#1F1E3D;
+.navbar {
+    background-color: #191c32;
     font-family: "Mulish";
-    color:#B1BAC7;
+    color: #B1BAC7;
     min-height: 8vh;
 }
 
-.navbar-brand{
+.navbar-brand {
     font-weight: bold;
 }
 
-.navbar-toggler-icon{
-    background-color:#B1BAC7;
+.navbar-toggler-icon {
+    background-color: #B1BAC7;
 }
 
-.nav-item{
-    display:flex;
+.nav-item {
+    display: flex;
     align-items: center;
-    padding:0 0.3rem;
+    padding: 0 0.3rem;
     font-size: 0.8rem;
-    margin:0.5rem 0;
+    margin: 0.5rem 0;
 }
 
-.nav-item p{
-   margin:auto;
-   margin-left:0;
+.nav-item p {
+    margin: auto;
+    margin-left: 0;
 }
 
-@media (max-width:990px){
-
-}
+@media (max-width:990px) {}

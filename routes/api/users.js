@@ -290,7 +290,9 @@ router.post("/createIssue", verify, (req, res) => {
                             description: req.body.issueDescription,
                             priority: req.body.issuePriority,
                             solved: req.body.issueSolved,
+                            deadline: req.body.issueDeadline,
                             project: req.body.projectId
+
                         });
                         newIssue.save()
                             .then(issue => {
@@ -320,7 +322,8 @@ router.put("/modifyIssue", verify, (req, res) => {
             title: req.body.issueTitle,
             description: req.body.issueDescription,
             priority: req.body.issuePriority,
-            solved: req.body.issueSolved
+            solved: req.body.issueSolved,
+            deadline: req.body.issueDeadline
         }
 
         Project.findById(req.body.projectId)
@@ -333,7 +336,8 @@ router.put("/modifyIssue", verify, (req, res) => {
                                     "title": newModifiedIssue.title,
                                     "description": newModifiedIssue.description,
                                     "priority": newModifiedIssue.priority,
-                                    "solved": newModifiedIssue.solved
+                                    "solved": newModifiedIssue.solved,
+                                    "deadline": newModifiedIssue.deadline
                                 }
                             }, { new: true })
                             .populate('users', 'name email')
@@ -638,6 +642,48 @@ router.delete("/removeUserFromIssue", verify, (req, res) => {
     }
 })
 
+router.post("/addCommentToIssue", verify, (req, res) => {
+    if (!req.user) {
+        res.status(401).json("You are not authenticated");
+    } else {
+        //get the issue
+        const newComment = {
+            commenter: {
+                name: req.user.name,
+                id: req.user.id
+            },
+            details: req.body.commentDetail
+        };
+        Issue.findByIdAndUpdate(req.body.issueId, {
+                $push: { 'comments': newComment }
+            }, { new: true })
+            .populate('users', 'name email')
+            .then(issue => res.status(200).json(issue))
+            .catch(err1 => res.status(400).json(err1))
+    }
+})
 
+router.delete("/deleteCommentFromIssue", verify, (req, res) => {
+    if (!req.user) {
+        res.status(401).json("You are not authenticated");
+    } else {
+        Project.findById(req.body.projectId)
+            .then(project => {
+                //if the user is the admin of the project
+                if (project.admins.includes(mongoose.Types.ObjectId(req.user.id))) {
+                    Issue.findByIdAndUpdate(req.body.issueId, {
+                            $pull: { 'comments': { _id: req.body.commentId } }
+                        }, { new: true })
+                        .populate('users', 'name email')
+                        .then(issue => res.status(200).json(issue))
+                        .catch(err1 => {
+                            res.status(400).json(err1);
+                        })
+                } else {
+                    res.status(400).json("You are not the admin")
+                }
+            }).catch(err2 => res.status(400).json(err2))
+    }
+})
 
 module.exports = router;

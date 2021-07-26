@@ -12,13 +12,15 @@ function NavBar(props) {
                 aria-controls="navbarSupportedContent"
                 aria-expanded="false"
                 aria-label="Toggle navigation"
-                style={{color:"#B1BAC7",padding:"0"}}>
+                style={{ color: "#B1BAC7", padding: "0" }}>
                 <i className="fas fa-th-list"></i>
             </button>
 
             <div className="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul className="navbar-nav ml-auto">
-                    
+                    <li className="nav-item">
+                        <p>v0.1! Updated the add deadline and comments section!!</p>
+                    </li>
                     <li className="nav-item">
                         <p>Welcome {name}!</p>
                     </li>
@@ -27,7 +29,7 @@ function NavBar(props) {
                     </li>
                     <li className="nav-item">
                         <button className="function-button"
-                            style={{ width: "5rem", height: "2rem", margin:"0" }}
+                            style={{ width: "5rem", height: "2rem", margin: "0" }}
                             onClick={handleLogOut}>
                             {props.loading ?
                                 <div className="loader"

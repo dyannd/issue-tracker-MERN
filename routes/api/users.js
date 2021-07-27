@@ -35,6 +35,7 @@ const generateRefreshToken = (user) => {
         process.env.SECRETREFRESHKEY, { expiresIn: '60d' });
 };
 
+//middleware to verify the user's identity
 const verify = (req, res, next) => {
     //check auth token if still valid
     const authHeader = req.headers.authorization;
@@ -206,6 +207,8 @@ router.post("/createProject", verify, (req, res) => {
     }
 })
 
+// const socket = req.app.get('socketIo');
+// socket.emit('currentProject', 'world');
 router.put("/modifyProject", verify, (req, res) => {
     if (!req.user) {
         res.status(401).json("You are not authenticated");
@@ -215,7 +218,7 @@ router.put("/modifyProject", verify, (req, res) => {
                 if (project.admins.includes(mongoose.Types.ObjectId(req.user.id))) {
                     project.name = req.body.projectName;
                     project.save()
-                        .then(
+                        .then(project =>
                             User.findById(req.user.id)
                             .populate('projects')
                             .then(user => {

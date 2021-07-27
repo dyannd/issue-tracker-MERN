@@ -136,8 +136,7 @@ function DisplayIssue(props) {
                                 <div className="select-wrapper date-select">
                                     <input type="datetime-local" className="edit-input"
                                         style={{ width: "100%", paddingRight: "0" }}
-                                        onChange={evt => setModifiedIssueDeadline(evt.target.value)}
-                                        defaultValue={deadline}>
+                                        onChange={evt => setModifiedIssueDeadline(evt.target.value)}>
                                     </input>
                                     <i className="far fa-calendar-alt" style={{ background: "#12111a" }}></i>
                                 </div>
@@ -325,19 +324,20 @@ function DisplayIssue(props) {
                             </figure>
                         </span>
                         {showAddComments?
-                        <form className="content-section" onSubmit={(e) => { e.preventDefault(); handleAddComment() }}>
+                        <div className="content-section">
                             <textarea
                                 className="edit-input"
                                 placeholder="Add a comment"
+                                value={addedComment}
                                 onChange={evt => setAddedComment(evt.target.value)}
                                 required>
                             </textarea>
                             <button className="function-button"
-                                type="submit"
+                                onClick={handleAddComment}
                                 style={{ width: "4.5rem", fontSize: "0.8rem", height: "2rem", margin: "0.5rem" }}>
                                 Add
                             </button>
-                        </form>
+                        </div>
                         :null}
                         {comments ? comments.map(comment =>
                             //Getting the date object of date created
@@ -355,7 +355,7 @@ function DisplayIssue(props) {
                                 <p style={{ margin: "auto 0 auto 0.5rem" }}>
                                     {comment.commenter.id === props.currentUser._id ?
                                         <strong>You</strong> :
-                                        <strong> comment.commenter.name</strong>}
+                                        <strong> {comment.commenter.name}</strong>}
                                     {" on " + getMMDDYYYY(comment.date)}
                                 </p>
                             </div>

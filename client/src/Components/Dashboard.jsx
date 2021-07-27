@@ -7,6 +7,9 @@ import DisplayProject from './DisplayProject';
 import DisplayIssue from './DisplayIssue';
 import PopUp from './PopUp';
 import './Dashboard.css';
+import {io} from 'socket.io-client';
+
+
 function Dashboard(props) {
 
     const [currentUser, setCurrentUser] = React.useState("");
@@ -29,8 +32,13 @@ function Dashboard(props) {
     const [showDone, setShowDone] = React.useState(true);
     const [displayError, setDisplayError] = React.useState(null);
     const history = useHistory();
+    const SERVER = "http://localhost:8888/";
+    const socket = io(SERVER);
 
     /************************MIDDLEWARE*********************** */
+    React.useEffect(()=>{
+        
+    },[currentUser])
     /**CHECK EXPIRY MUST BE USED WITH EVERY FUNCTION THAT MAKES API CALLS */
     async function checkExpiry() {
         //first of all check token expiry
@@ -210,6 +218,7 @@ function Dashboard(props) {
                     if (res.status === 200) {
                         setIsAuthenticated(true);
                         setCurrentUser(res.data);
+                        socket.emit('joinUser', res.data._id);
                         console.log("Successfully retrieved data!", res.data);
                     }
                 }).catch((err) => {
@@ -275,7 +284,6 @@ function Dashboard(props) {
                 }
             }).catch(error => {
                 setIsLoadingProject(false);
-                console.log(error.response.data);
                 setDisplayError(error.response.data);
             })
         }
@@ -301,7 +309,6 @@ function Dashboard(props) {
                 }
             }).catch(error => {
                 setIsLoadingIssue(false);
-                console.log(error.response.data);
                 setDisplayError(error.response.data);
             })
         }
@@ -332,7 +339,6 @@ function Dashboard(props) {
                 }
             }).catch(error => {
                 setIsLoadingProject(false);
-                console.log(error.response.data);
                 setDisplayError(error.response.data);
             })
         }
@@ -359,14 +365,96 @@ function Dashboard(props) {
                 if (res.status === 200) {
                     setCurrentUser(res.data);
                     console.log("Edited project name!");
+                    socket.emit('editProject', {project: currentProject,userId: currentUser._id});
                 }
             }).catch(error => {
                 setIsLoadingProject(false);
-                console.log(error.response.data);
                 setDisplayError(error.response.data);
             })
         }
     }
+
+    const prevProject=React.useRef('');
+    const prevIssue=React.useRef('');
+    //store previous currentProject state in prevProject
+    React.useEffect(()=>{
+        prevProject.current = currentProject;
+        prevIssue.current=currentIssue;
+    },[currentProject, currentIssue])
+
+    //realtime update from socketIo
+    React.useEffect(()=>{
+        socket.on("updateUserProjectRealtime", userData => {
+            setCurrentUser(userData);
+        })
+
+        socket.on("deleteUserProjectRealtime", data => {
+            const readableData = JSON.parse(JSON.stringify(data));
+            const user = readableData.userDetail;
+            const project = readableData.projectDetail;
+            
+            //if the previous project is being opened!
+            if (project._id === prevProject.current._id){
+                setCurrentIssueList([]);
+                setCurrentProject(null);
+                setCurrentIssue(null);
+            } 
+            setCurrentUser(user);
+        })
+       
+        socket.on("createIssueRealtime", projectData => {
+            //only update realtime IF AND ONLY IF user is in the same project and not having any issues open
+            if( prevProject.current && prevProject.current._id === projectData._id && !prevIssue.current){
+                setCurrentIssueList(projectData.issues);
+                console.log("Updated issue list since a user changes it!")
+            }
+        })
+
+        socket.on("modifyIssueRealtime", data => {
+            const readableData = JSON.parse(JSON.stringify(data));
+            const issueData = readableData.issueData;
+            const projectData = readableData.projectData;
+             //only update realtime IF AND ONLY IF user is in the same project and not having any issues open 
+            //OR having exactly that issue opened
+            if(prevProject.current && prevProject.current._id === projectData._id && !prevIssue.current){
+                handleClickOnProject(projectData._id);
+                console.log("Updated issue list since a user changes it!")
+            }else if (prevIssue.current && issueData._id === prevIssue.current._id)  {
+                setCurrentIssue(issueData);
+                console.log("Updated issue list since a user changes it!")
+            }
+        })
+
+        socket.on("deleteIssueRealtime", data=> {
+            const readableData = JSON.parse(JSON.stringify(data));  
+            const issueId = readableData.issueId;
+            const projectData = readableData.projectData;
+
+            //only update realtime IF AND ONLY IF user is in the same project and not having any issues open 
+            //OR having exactly the deleted issue opened
+            if(prevProject.current && prevProject.current._id === projectData._id && !prevIssue.current){
+                setCurrentIssueList(projectData.issues);
+                console.log("Updated issue list since a user changes it!")
+            }else if (prevIssue.current && issueId === prevIssue.current._id)  {
+                setCurrentIssue(null);
+                setCurrentIssueList(projectData.issues);
+                console.log("Updated issue list since a user changes it!")
+            }
+        })
+
+        socket.on("modifyCommentRealtime", data => {
+            const readableData = JSON.parse(JSON.stringify(data));
+            const issueData = readableData.issueData;
+             //only update realtime if  having exactly that issue opened  
+            if (prevIssue.current && issueData._id === prevIssue.current._id)  {
+                setCurrentIssue(issueData);
+                console.log("Updated issue comments since a user changes it!")
+            }
+        })
+
+
+    },[socket]);
+
 
     //DELETING A PROJECT
     async function handleDeleteProject(id) {
@@ -390,11 +478,11 @@ function Dashboard(props) {
                     if (res.status === 200) {
                         setCurrentUser(res.data);
                         setCurrentProject(null);
+                        socket.emit('deleteProject', {project: currentProject,userId: currentUser._id});
                         console.log("Deleted project!");
                     }
                 }).catch(error => {
                     setIsLoadingProject(false);
-                    console.log(error.response.data);
                     setDisplayError(error.response.data);
                 })
             } else {
@@ -432,16 +520,12 @@ function Dashboard(props) {
                     setCurrentIssueList(res.data.issues);
                     //re-sort to keep the issues in order like before modifying
                     handleSort(sortOption, res.data.issues);
-                    setNewIssueTitle("");
-                    setNewIssueDescription("");
-                    setNewIssueSolved("");
-                    setNewIssuePriority("");
                     document.getElementById("formIssueToggler").click();
                     console.log("New issue submitted!");
+                    socket.emit('createIssue', {project: res.data, userId: currentUser._id});
                 }
             }).catch(error => {
                 setIsLoadingIssue(false);
-                console.log(error.response.data);
                 setDisplayError(error.response.data);
             })
         }
@@ -473,10 +557,10 @@ function Dashboard(props) {
                 if (res.status === 200) {
                     setCurrentIssue(res.data)
                     console.log("Edited issue details!");
+                    socket.emit('modifyIssue', {project: currentProject, userId: currentUser._id, issue:res.data});
                 }
             }).catch(error => {
                 setIsLoadingIssue(false);
-                console.log(error.response.data);
                 setDisplayError(error.response.data);
             })
         }
@@ -506,11 +590,11 @@ function Dashboard(props) {
                         setCurrentProject(res.data);
                         setCurrentIssueList(res.data.issues);
                         setCurrentIssue(null);
-                        console.log("Deleted issue successfully!")
+                        console.log("Deleted issue successfully!");
+                        socket.emit('removeIssue', {project: res.data, userId: currentUser._id, issueId:id});
                     }
                 }).catch(error => {
                     setIsLoadingIssue(false);
-                    console.log(error.response.data);
                     setDisplayError(error.response.data);
                 })
             }
@@ -539,6 +623,8 @@ function Dashboard(props) {
                 setIsLoadingProject(false);
                 if (res.status === 200) {
                     setCurrentProject(res.data);
+                    //send the new project data (which includes the new user)
+                    socket.emit('editProject', {project: res.data, userId: currentUser._id});
                     console.log("Added new user!")
                 }
             }).catch(error => {
@@ -570,6 +656,9 @@ function Dashboard(props) {
                     if (res.status === 200) {
                         setCurrentProject(res.data)
                         setCurrentIssue(null);
+                        console.log(res.data);
+                        //sending the old project (which still has the old user's name!)
+                        socket.emit('editProject', {project: currentProject, userId: currentUser._id});
                         console.log("Deleted user from project!")
                     }
                 }).catch(error => {
@@ -602,13 +691,12 @@ function Dashboard(props) {
             }).then(res => {
                 setIsLoadingIssue(false);
                 if (res.status === 200) {
-                    setCurrentIssue(res.data)
-                    console.log(res.data)
-                    console.log("Assigned user to project!")
+                    setCurrentIssue(res.data);
+                    console.log("Assigned user to project!");
+                    socket.emit('assignUserIssue', {project: currentProject, userId: currentUser._id, issue:res.data});
                 }
             }).catch(error => {
                 setIsLoadingIssue(false);
-                console.log(error.response.data);
                 setDisplayError(error.response.data);
             })
         }
@@ -635,13 +723,11 @@ function Dashboard(props) {
                 }).then(res => {
                     setIsLoadingIssue(false);
                     if (res.status === 200) {
-                        setCurrentIssue(res.data)
-                        console.log(res.data)
-                        console.log("Removed user from issue!")
+                        setCurrentIssue(res.data);
+                        console.log("Removed user from issue!");
                     }
                 }).catch(error => {
                     setIsLoadingIssue(false);
-                    console.log(error.response.data);
                     setDisplayError(error.response.data);
                 })
             }
@@ -668,8 +754,9 @@ function Dashboard(props) {
             }).then(res => {
                 setIsLoadingIssue(false);
                 if (res.status === 200) {
-                    setCurrentIssue(res.data)
-                    console.log("Added comment!")
+                    setCurrentIssue(res.data);
+                    console.log("Added comment!");
+                    socket.emit('modifyComment', {project: currentProject, userId: currentUser._id, issue: res.data});
                 }
             }).catch(error => {
                 setIsLoadingIssue(false);
@@ -698,9 +785,9 @@ function Dashboard(props) {
             }).then(res => {
                 setIsLoadingIssue(false);
                 if (res.status === 200) {
-                    setCurrentIssue(res.data)
-                    console.log(res.data)
-                    console.log("Deleted comment!")
+                    setCurrentIssue(res.data);
+                    console.log("Deleted comment!");
+                    socket.emit('modifyComment', {project: currentProject, userId: currentUser._id, issue: res.data});
                 }
             }).catch(error => {
                 setIsLoadingIssue(false);
@@ -820,7 +907,7 @@ function Dashboard(props) {
 
                             {currentIssue ? null :
                                 <div className="form-issue-wrapper collapse " id="formIssue" >
-                                    <form className="form-issue " onSubmit={handleSubmitNewIssue} >
+                                    <div className="form-issue " >
                                         <input type="text" placeholder="Title" id="IssueTitle" required
                                             value={newIssueTitle}
                                             onChange={evt => setNewIssueTitle(evt.target.value)}>
@@ -863,8 +950,12 @@ function Dashboard(props) {
                                             </input>
                                             <i className="far fa-calendar-alt"></i>
                                         </div>
-                                        <button className="function-button button-submit" type="submit">Add</button>
-                                    </form>
+                                        <button onClick={handleSubmitNewIssue} 
+                                                className="function-button button-submit" 
+                                                type="submit">
+                                            Add
+                                            </button>
+                                    </div>
                                 </div>}
                             {currentIssue ?
                                 <DisplayIssue

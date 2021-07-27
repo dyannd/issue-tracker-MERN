@@ -32,13 +32,10 @@ function Dashboard(props) {
     const [showDone, setShowDone] = React.useState(true);
     const [displayError, setDisplayError] = React.useState(null);
     const history = useHistory();
-    const SERVER = "http://localhost:8888/";
+    const SERVER = "localhost:8888/";
     const socket = io(SERVER);
 
     /************************MIDDLEWARE*********************** */
-    React.useEffect(()=>{
-        
-    },[currentUser])
     /**CHECK EXPIRY MUST BE USED WITH EVERY FUNCTION THAT MAKES API CALLS */
     async function checkExpiry() {
         //first of all check token expiry

@@ -32,7 +32,7 @@ function Dashboard(props) {
     const [showDone, setShowDone] = React.useState(true);
     const [displayError, setDisplayError] = React.useState(null);
     const history = useHistory();
-    const SERVER = "localhost:8888/";
+    const SERVER = "localhost:8888/" || "https://mernissuetracker.herokuapp.com/";
     const socket = io(SERVER);
 
     /************************MIDDLEWARE*********************** */

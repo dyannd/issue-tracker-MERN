@@ -19,7 +19,7 @@ function NavBar(props) {
             <div className="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul className="navbar-nav ml-auto">
                     <li className="nav-item">
-                        <p>v0.1! Updated the add deadline and comments section!!</p>
+                        <p>v0.2! Added realtime connections and UI modify! </p>
                     </li>
                     <li className="nav-item">
                         <p>Welcome {name}!</p>
@@ -28,13 +28,11 @@ function NavBar(props) {
                         <Link className="nav-link" >Home <span className="sr-only">(current)</span></Link>
                     </li>
                     <li className="nav-item">
-                        <button className="function-button"
-                            style={{ width: "5rem", height: "2rem", margin: "0" }}
+                        <button className="function-button button-small"  
                             onClick={handleLogOut}>
                             {props.loading ?
                                 <div className="loader"
                                     style={{ margin: "auto", borderTopColor: "#FFFFFF" }}>
-
                                 </div> :
                                 "Log out"}
                         </button>

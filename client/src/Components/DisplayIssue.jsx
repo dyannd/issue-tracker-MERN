@@ -164,7 +164,7 @@ function DisplayIssue(props) {
                                 <i className="far fa-calendar-alt" style={{ background: "#12111a" }}></i>
                             </div> : null}
 
-                        <button className="function-button button-submit"
+                        <button className="function-button button-medium"
                             onClick={handleEditConfirm}>
                             Confirm
                         </button>
@@ -215,7 +215,9 @@ function DisplayIssue(props) {
 
 
                 {props.clicked ?
-                    <div className={width < 580 ? "" : "icon-wrapper"} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                    <div className={width < 580 ? "" : "icon-wrapper"} 
+                    style={{ display: width < 580 ?"flex":"", flexDirection:width < 580 ? "column":"", alignItems: "center" }}
+                    >
                         {isAdmin ?
                             <div className="icon-wrapper" style={{ margin: width < 580 ? "0.8rem 0 0.8rem 0" : "" }}>
                                 <i className="far fa-trash-alt" onClick={() => props.handleDelete(_id)} ></i>
@@ -307,11 +309,7 @@ function DisplayIssue(props) {
                                             </option>) : null}
                                     </select>
                                     <button type="submit"
-                                        className="function-button"
-                                        style={{
-                                            margin: "0", width: "3.5rem", fontSize: "0.8rem",
-                                            fontWeight: "normal", padding: "0.1rem 0.5rem"
-                                        }}>
+                                        className="function-button button-small">
                                         Assign
                                     </button>
                                 </div>
@@ -339,9 +337,8 @@ function DisplayIssue(props) {
                                     onChange={evt => setAddedComment(evt.target.value)}
                                     required>
                                 </textarea>
-                                <button className="function-button"
-                                    onClick={handleAddComment}
-                                    style={{ width: "4.5rem", fontSize: "0.8rem", height: "2rem", margin: "0.5rem" }}>
+                                <button className="function-button button-small"
+                                    onClick={handleAddComment}>                 
                                     Add
                                 </button>
                             </div>

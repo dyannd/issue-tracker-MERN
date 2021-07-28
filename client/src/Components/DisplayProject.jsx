@@ -124,7 +124,7 @@ function DisplayProject(props) {
                                 value={addedEmail}
                                 onChange={evt => setAddedEmail(evt.target.value)}>
                             </input>
-                            <div className="select-wrapper" style={{ width: "4.5rem" }}>
+                            <div className="select-wrapper" style={{ width: "6rem" }}>
                                 <select
                                     onChange={evt => setAddedRole(evt.target.value)}
                                     className="select edit-input-color2"
@@ -136,7 +136,8 @@ function DisplayProject(props) {
                                 </select>
                             </div>
                             <button type="submit"
-                                style={{ border: "none", background: "#1B1C30", color: "#B1BAC7" }}>
+                                className="button-small"
+                                style={{ border: "none", background: "#1B1C30", color: "#B1BAC7", fontWeight:"bold" }}>
                                 Add
                             </button>
                         </form>

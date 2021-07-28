@@ -1,5 +1,6 @@
 .navbar {
     background-color: #191c32;
+    background-image: url("https://www.transparenttextures.com/patterns/dark-fish-skin.png");
     font-family: "Mulish";
     color: #B1BAC7;
     min-height: 8vh;
@@ -25,5 +26,3 @@
     margin: auto;
     margin-left: 0;
 }
-
-@media (max-width:990px) {}

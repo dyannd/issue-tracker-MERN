@@ -80,7 +80,7 @@ function SignIn(props) {
       <div className="col-12 col-sm-12 col-md-8 signin-form-wrapper">
         <form noValidate className="signin-form">
           <h1>{hasAccount ? "Sign In" : "Sign Up"}</h1>
-
+          <h6>{"<i>ssueTracker"}</h6>
           {hasAccount ? null :
             <>
               <input className="signcomponent"
@@ -116,7 +116,7 @@ function SignIn(props) {
             <input className="signcomponent"
               type="password"
               id="password2"
-              placeholder="Password"
+              placeholder="Confirm Password"
               required
               value={password2}
               error={errors.password2}
@@ -126,30 +126,39 @@ function SignIn(props) {
           <div className="button-wrapper">
             {hasAccount ? (
               <>
-                <p className="switcher-text">  Haven't got an account yet?
+                <div style={{  display: "flex", flexDirection:"column" }}>
+                  <p className="switcher-text"> Just got here?
+                    <span className="click-text"
+                      onClick={() => {
+                        setHasAccount(prev => !prev);
+                        setErrors({});
+                      }}>
+                      {" "}Join Us!
+                    </span>
+                  </p>
+                  <button className="function-button sign-button" type="submit" onClick={handleLogin}>
+                    {isLoading ? <div className="loader-signin"></div> : "Sign in"}
+                  </button>
+                </div>
+
+
+              </>
+            ) : <>
+              <div style={{ display: "flex", flexDirection:"column" }}>
+                <p className="switcher-text"> Have an account?
                   <span className="click-text"
                     onClick={() => {
                       setHasAccount(prev => !prev);
                       setErrors({});
-                    }}> Join us</span>
+                    }}>
+                    {" "} Sign In
+                  </span>
                 </p>
-                <button className="function-button" type="submit" onClick={handleLogin}>
-                  {isLoading ? <div className="loader-signin"></div> : "Sign in"}
+                <button className="function-button sign-button" type="submit" onClick={handleSignUp} >
+                  {isLoading ? <div className="loader-signin"></div> : "Sign up"}
                 </button>
+              </div>
 
-              </>
-            ) : <>
-
-              <p className="switcher-text"> Have an account?
-                <span className="click-text"
-                  onClick={() => {
-                    setHasAccount(prev => !prev);
-                    setErrors({});
-                  }}> Sign In</span>
-              </p>
-              <button className="function-button" type="submit" onClick={handleSignUp} >
-                {isLoading ? <div className="loader"></div> : "Sign up"}
-              </button>
             </>
             }
 

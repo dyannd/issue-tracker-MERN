@@ -23,6 +23,7 @@ display-content: flex vertically
     /**bc the navbar is 8vh**/
     margin: 0;
     background-color: #12111a;
+    background-image: url("https://www.transparenttextures.com/patterns/dark-fish-skin.png");
 }
 
 
@@ -145,13 +146,30 @@ input [ type="datetime-local"] {
 }
 
 
+/**BUTTONS CLASSES**/
+
+.button-small {
+    margin: 0;
+    width: 5.3rem;
+    height: 1.4rem;
+    font-size: 0.7rem;
+}
+
+.button-medium {
+    margin: 0.5rem 0 0 0;
+    width: 6.5 rem;
+    height: 1.7rem;
+    font-size: 0.8rem;
+}
+
+
 /**customizing the select bar**/
 
 .select-wrapper {
     position: relative;
     align-items: center;
     display: flex;
-    width: 60%;
+    width: 11rem;
     margin: 0;
 }
 
@@ -204,14 +222,6 @@ option {
     width: 0.5rem;
 }
 
-.button-submit {
-    margin-top: 0.5rem;
-    margin-bottom: 0;
-    width: 5rem;
-    font-size: 0.8rem;
-    padding: 0.4rem;
-}
-
 .date-select i {
     position: absolute;
     pointer-events: none;
@@ -223,7 +233,7 @@ option {
 }
 
 
-/**For each displayed project / issue**/
+/**FOR EACH DISPLAYED PROJECT, ISSUE TAB**/
 
 .display-content-wrapper {
     display: flex;
@@ -260,10 +270,12 @@ option {
 }
 
 
-/**class added when clicking a project**/
+/**CLASS ADDED WHEN A PROJECT IS CLICKED**/
 
 .project-clicked {
     background-color: #91DEFB;
+    background-image: url("https://www.transparenttextures.com/patterns/inspiration-geometry.png");
+    background-blend-mode: difference;
     opacity: 1;
     transition: all 0.5s;
     color: #12111a;
@@ -278,7 +290,7 @@ option {
 }
 
 
-/**For each block of display stuff**/
+/**A FLEXBOX WITH COLUMN FLEX**/
 
 .display-content {
     width: 100%;
@@ -286,6 +298,9 @@ option {
     flex-direction: column;
     margin: 0.5rem 0;
 }
+
+
+/**A FLEXBOX WITH ROW FLEX**/
 
 .content-section {
     display: flex;
@@ -296,6 +311,9 @@ option {
 
 /**THE PRIORITY AND STATE DISPLAY**/
 
+
+/**THE WRAPPER**/
+
 .display-indicator {
     display: flex;
     flex-direction: column;
@@ -304,6 +322,9 @@ option {
     margin: auto;
     text-align: center;
 }
+
+
+/**THE OVAL THING**/
 
 .state-indicator {
     width: 5.5rem;
@@ -314,7 +335,11 @@ option {
     margin: 0.1rem 0;
     display: flex;
     align-items: center;
+    cursor: pointer;
 }
+
+
+/**TEXT INSIDE IT**/
 
 .state-indicator p {
     color: #F8F9FD;
@@ -322,6 +347,9 @@ option {
     margin: auto;
     text-align: center;
 }
+
+
+/**ICON DISPLAYED WHEN FETCHING API**/
 
 .loader {
     margin: auto;
@@ -344,7 +372,7 @@ option {
 }
 
 
-/**For the forms and inputs needed for editing tasks**/
+/**FOR THE FORM ON THE ISSUES SIDE*/
 
 .form-edit {
     display: flex;
@@ -384,6 +412,7 @@ textarea {
 .edit-input-color2 {
     color: #12111a;
     border-color: #12111a;
+    margin: 0;
 }
 
 .edit-input-color2::placeholder {
@@ -395,7 +424,7 @@ textarea {
 }
 
 
-/**for the border design around the headings**/
+/**BORDER DESIGN AROUND SECTIONS IN PROJECTS AND ISSUES**/
 
 .border-design {
     width: 95%;
@@ -404,6 +433,9 @@ textarea {
     background-color: red;
     margin: auto 0;
 }
+
+
+/**ITS COLORS**/
 
 .dkblue {
     background-color: #191c32;
@@ -449,6 +481,7 @@ textarea {
 }
 
 @media (max-width: 580px) {
+    /**MAKE THE ISSUES COLUMN BEING A SEPARATED *PAGE* **/
     .issues {
         position: absolute;
         z-index: 1;
@@ -456,7 +489,15 @@ textarea {
         min-height: 92vh;
     }
     i {
-        transform: scale(1.2, 1.2);
+        transform: scale(1.3, 1.3);
+    }
+    .small-icon {
+        transform: scale(1.1, 1.1);
+    }
+    .button-small {
+        font-size: 0.8rem;
+        height: 1.9rem;
+        width: 6rem;
     }
     .heading-wrapper h4 {
         font-size: 1.3rem;
@@ -471,22 +512,18 @@ textarea {
         font-size: 0.9rem;
     }
     .state-indicator {
-        height: 1.6rem;
+        height: 1.8rem;
     }
     .create-deadline {
         flex-direction: column;
     }
-    .edit-input {
+    .edit-input,
+    .edit-input-color2 {
         font-size: 0.9rem;
         height: 2rem;
         margin: 0.5rem 0;
     }
     textarea.edit-input {
         height: 6rem;
-    }
-    .function-button {
-        height: 1.8rem;
-        width: 8rem !important;
-        font-size: 0.9rem !important;
     }
 }

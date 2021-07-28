@@ -708,7 +708,7 @@ function Dashboard(props) {
                 setIsLoadingIssue(false);
                 if (res.status === 200) {
                     setCurrentIssue(res.data);
-                    console.log("Assigned user to project!");
+                    console.log("Assigned user to issue!");
                     socket.emit('assignUserIssue', { project: currentProject, userId: currentUser._id, issue: res.data });
                 }
             }).catch(error => {
@@ -873,20 +873,20 @@ function Dashboard(props) {
                                 <div className="heading-wrapper">
                                     <h4>Issues:
                                         {currentIssue ?
-                                            <button className="function-button"
-                                                style={{ margin: "0", fontSize: "0.8rem", width: "4.5rem", marginLeft: "0.5rem" }}
-                                                onClick={() => {
-                                                    setCurrentIssue(null);
-                                                    handleClickOnProject(currentProject._id);
-                                                }}>
-                                                All issues
-                                            </button> : null}
+
+                                            <i className="fas fa-arrow-left" onClick={() => {
+                                                setCurrentIssue(null);
+                                                handleClickOnProject(currentProject._id);
+                                            }}>
+
+                                            </i>
+                                            : null}
                                         {isLoadingIssue ? <div className="loader"></div> : null}
                                     </h4>
 
                                     {currentProject ? currentIssue ? null :
                                         <div style={{ display: "flex", justifyContent: "flex-end", width: "100%", height: "1rem" }}>
-                                            <div className="select-wrapper" style={{ width: "50%" }}>
+                                            <div className="select-wrapper" style={{ width: "10rem" }}>
                                                 <select id="issueSort" onChange={evt => {
                                                     const newSortOption = evt.target.value;
                                                     setSortOption(newSortOption);
@@ -952,13 +952,11 @@ function Dashboard(props) {
 
                                 {currentProject && width < 580 && !currentIssue ?
                                     <div className="heading-wrapper">
-                                        <button className="function-button"
-                                            style={{ fontSize: "0.7rem", margin: "0 0.3rem", width: "5rem" }}
-                                            onClick={() => {
-                                                setDisplayIssesOnMobile(false);
-                                            }}>
-                                            Projects
-                                        </button>
+
+                                        <i className="fas fa-arrow-left" onClick={() => {
+                                            setDisplayIssesOnMobile(false);
+                                        }}></i>
+
                                         {showDone ?
                                             <span
                                                 className="state-indicator"
@@ -1042,8 +1040,7 @@ function Dashboard(props) {
                                                 <i className="far fa-calendar-alt"></i>
                                             </div>
                                             <button onClick={handleSubmitNewIssue}
-                                                className="function-button button-submit"
-                                                style={{ height: "2rem" }}
+                                                className="function-button button-medium"
                                                 type="submit">
                                                 Add
                                             </button>

@@ -5,26 +5,39 @@
     font-family: "Mulish", sans-serif;
 }
 
+.signin-illustration {
+    background-color: #12111a;
+    background-image: url("https://www.transparenttextures.com/patterns/inspiration-geometry.png");
+}
+
 .signin-form-wrapper {
-    padding: 0 10%;
     min-height: 100vh;
+    background-color: transparent;
     display: flex;
     align-items: center;
+    padding: 0;
 }
 
 .signin-form {
     margin: auto;
-    width: 30rem;
-    background-color: #191c32;
-    padding: 5% 5%;
+    width: 100%;
+    padding: 5rem 5rem;
     color: #B1BAC7;
-    text-align: center;
-    border-radius: 20px;
+    text-align: left;
+}
+
+.signin-form h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.signin-form h6 {
+    margin-bottom: 2.5rem;
 }
 
 .signcomponent {
     width: 100%;
-    padding: 1% 2%;
+    padding: 0.2rem 0.5rem;
     font-size: 0.8rem;
     margin: 0.5rem 0;
     background: transparent;
@@ -37,6 +50,7 @@
 
 .error-text {
     font-size: 0.7rem;
+    color: #91DEFB;
 }
 
 .signcomponent:focus {
@@ -56,23 +70,31 @@ input:-webkit-autofill {
 
 .function-button {
     width: 7rem;
+    height: 2rem;
     border: none;
     color: #303636;
     background: linear-gradient(to right, #ABE9F0 50%, #BCE6FE 100%);
-    padding: 1%;
+    padding: 0.3rem 1rem;
     font-weight: bold;
-    margin: 0.5rem 0;
+    margin: 1rem 0;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    justify-content: center;
 }
 
 .switcher-text {
     font-size: 0.8rem;
-    margin: auto;
+    margin: 1rem 0;
     margin-left: 0;
+    margin-right: 0.8rem;
 }
 
 .click-text {
     cursor: pointer;
     color: #91DEFB;
+    margin: auto;
+    font-size: 0.8rem;
 }
 
 .loader-signin {
@@ -93,5 +115,22 @@ input:-webkit-autofill {
     }
     100% {
         transform: rotate(360deg);
+    }
+}
+
+@media(max-width:850px) {
+    .signin-form-wrapper {
+        background-color: #12111a;
+        background-image: url("https://www.transparenttextures.com/patterns/inspiration-geometry.png");
+    }
+    .signin-form {
+        padding: 3rem 3rem;
+    }
+    .signcomponent {
+        font-size: 0.9rem;
+    }
+    .sign-button {
+        width: 7rem;
+        height: 2rem;
     }
 }

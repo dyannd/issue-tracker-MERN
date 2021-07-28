@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { BrowserRouter as Router, Route, Switch, useHistory, Redirect } from 'react-router-dom';
 import NavBar from './NavBar';
@@ -12,28 +12,33 @@ import io from 'socket.io-client';
 
 function Dashboard(props) {
 
-    const [currentUser, setCurrentUser] = React.useState("");
+    const [currentUser, setCurrentUser] = useState("");
     //currentProject can help handle the render of its issues.
-    const [currentProject, setCurrentProject] = React.useState(null);
-    const [currentIssueList, setCurrentIssueList] = React.useState([]);
-    const [currentIssue, setCurrentIssue] = React.useState(null);
-    const [sortOption, setSortOption] = React.useState("date-as");
-    const [isAuthenticated, setIsAuthenticated] = React.useState(false);
-    const [isClickedCreateProject, setIsClickedCreateProject] = React.useState(false);
-    const [newProjectName, setNewProjectName] = React.useState("");
-    const [newIssueTitle, setNewIssueTitle] = React.useState("");
-    const [newIssueDescription, setNewIssueDescription] = React.useState("");
-    const [newIssuePriority, setNewIssuePriority] = React.useState("");
-    const [newIssueSolved, setNewIssueSolved] = React.useState("");
-    const [newIssueDeadline, setNewIssueDeadline] = React.useState("");
-    const [isLoadingIssue, setIsLoadingIssue] = React.useState(false);
-    const [isLoadingProject, setIsLoadingProject] = React.useState(false);
-    const [isLoadingLogOut, setIsLoadingLogOut] = React.useState(false);
-    const [showDone, setShowDone] = React.useState(true);
-    const [displayError, setDisplayError] = React.useState(null);
+    const [currentProject, setCurrentProject] = useState(null);
+    const [currentIssueList, setCurrentIssueList] = useState([]);
+    const [currentIssue, setCurrentIssue] = useState(null);
+    const [sortOption, setSortOption] = useState("date-as");
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isClickedCreateProject, setIsClickedCreateProject] = useState(false);
+    const [newProjectName, setNewProjectName] = useState("");
+    const [newIssueTitle, setNewIssueTitle] = useState("");
+    const [newIssueDescription, setNewIssueDescription] = useState("");
+    const [newIssuePriority, setNewIssuePriority] = useState("");
+    const [newIssueSolved, setNewIssueSolved] = useState("");
+    const [newIssueDeadline, setNewIssueDeadline] = useState("");
+    const [isLoadingIssue, setIsLoadingIssue] = useState(false);
+    const [isLoadingProject, setIsLoadingProject] = useState(false);
+    const [isLoadingLogOut, setIsLoadingLogOut] = useState(false);
+    const [showDone, setShowDone] = useState(true);
+    const [displayError, setDisplayError] = useState(null);
     const history = useHistory();
-    const SERVER = "https://mernissuetracker.herokuapp.com/";
+    const SERVER =  "https://mernissuetracker.herokuapp.com/";
+    // "localhost:8888/";
     const socket = io(SERVER);
+
+    //state for getting the windows'width
+    const [width, setWidth] = useState(window.innerWidth);
+
 
     /************************MIDDLEWARE*********************** */
     /**CHECK EXPIRY MUST BE USED WITH EVERY FUNCTION THAT MAKES API CALLS */
@@ -97,8 +102,8 @@ function Dashboard(props) {
         }
 
         function compareDeadSoonest(issueA, issueB) {
-            const dateA = issueA.deadline !== undefined ?Date.parse(issueA.deadline) : Date.parse(issueA.date) + 1000000000;
-            const dateB = issueB.deadline !== undefined ?Date.parse(issueB.deadline) : Date.parse(issueB.date)  + 1000000000;
+            const dateA = issueA.deadline !== undefined ? Date.parse(issueA.deadline) : Date.parse(issueA.date) + 1000000000;
+            const dateB = issueB.deadline !== undefined ? Date.parse(issueB.deadline) : Date.parse(issueB.date) + 1000000000;
             if (dateA < dateB) return -1
             if (dateA > dateB) return 1
             return 0
@@ -113,7 +118,7 @@ function Dashboard(props) {
             return 0
         }
 
-        
+
 
 
 
@@ -182,7 +187,7 @@ function Dashboard(props) {
             } else if (sortValue === "pri-des") {
                 //if reverse the array, the date will also get descended, so must make a new compare function!
                 return sorted.sort(comparePriorityDes);
-            }else if (sortValue === "end-des"){
+            } else if (sortValue === "end-des") {
                 return sorted.sort(compareDeadSoonest);
             }
         }
@@ -190,8 +195,99 @@ function Dashboard(props) {
         setCurrentIssueList(newIssueArray);
     }
 
+
+    //store previous currentProject state in prevProject and prevIssue, to assist front end realtime logic
+    const prevProject = useRef(null);
+    const prevIssue = useRef(null);
+    useEffect(() => {
+        prevProject.current = currentProject;
+        prevIssue.current = currentIssue;
+    }, [currentProject, currentIssue]);
+
+    //close socket on dismount
+    useEffect(() => {
+        return () => socket.close();
+    }, []);
+
+    /**GET REALTIME UPDATES FROM SOCKET IO */
+    useEffect(() => {
+        //for updating the project, React takes modded user info and set the state
+        socket.on("updateUserProjectRealtime", userData => {
+            setCurrentUser(userData);
+        })
+
+        //for deleting the project, React takes modded user info and the deleted project id
+        socket.on("deleteUserProjectRealtime", data => {
+            const readableData = JSON.parse(JSON.stringify(data));
+            const user = readableData.userDetail;
+            const project = readableData.projectDetail;
+
+            //if the previous project is being opened!
+            if (project._id === prevProject.current._id) {
+                setCurrentIssueList([]);
+                setCurrentProject(null);
+                setCurrentIssue(null);
+            }
+            setCurrentUser(user);
+        })
+
+        //creating an issue will display it to all the users in project
+        socket.on("createIssueRealtime", projectData => {
+            //only update realtime IF AND ONLY IF user is in the same project and not having any issues open
+            if (prevProject.current && prevProject.current._id === projectData._id && !prevIssue.current) {
+                setCurrentIssueList(projectData.issues);
+                console.log("Updated issue list since a user changes it!")
+            }
+        })
+
+        //modify an issue will display it to all the users in the project and in that issue
+        socket.on("modifyIssueRealtime", data => {
+            const readableData = JSON.parse(JSON.stringify(data));
+            const issueData = readableData.issueData;
+            const projectData = readableData.projectData;
+            //only update realtime IF AND ONLY IF user is in the same project and not having any issues open 
+            //OR having exactly that issue opened
+            if (prevProject.current && prevProject.current._id === projectData._id && !prevIssue.current) {
+                handleClickOnProject(projectData._id);
+                console.log("Updated issue list since a user changes it!")
+            } else if (prevIssue.current && issueData._id === prevIssue.current._id) {
+                setCurrentIssue(issueData);
+                console.log("Updated issue list since a user changes it!")
+            }
+        })
+
+        //deleting an issue will display it to all users in the project and currently working on that issue
+        socket.on("deleteIssueRealtime", data => {
+            const readableData = JSON.parse(JSON.stringify(data));
+            const issueId = readableData.issueId;
+            const projectData = readableData.projectData;
+
+            //only update realtime IF AND ONLY IF user is in the same project and not having any issues open 
+            //OR having exactly the deleted issue opened
+            if (prevProject.current && prevProject.current._id === projectData._id && !prevIssue.current) {
+                setCurrentIssueList(projectData.issues);
+                console.log("Updated issue list since a user changes it!")
+            } else if (prevIssue.current && issueId === prevIssue.current._id) {
+                setCurrentIssue(null);
+                setCurrentIssueList(projectData.issues);
+                console.log("Updated issue list since a user changes it!")
+            }
+        })
+
+        //** adding n deleting comments will display it to all users in the issue */
+        socket.on("modifyCommentRealtime", data => {
+            const readableData = JSON.parse(JSON.stringify(data));
+            const issueData = readableData.issueData;
+            //only update realtime if  having exactly that issue opened  
+            if (prevIssue.current && issueData._id === prevIssue.current._id) {
+                setCurrentIssue(issueData);
+                console.log("Updated issue comments since a user changes it!")
+            }
+        })
+    }, [socket]);
+
     /**********GET USER INFORMATION ON START UP**********/
-    React.useEffect(() => {
+    useEffect(() => {
         async function getDashboard() {
             setIsLoadingLogOut(true);
             setIsLoadingIssue(true);
@@ -215,8 +311,10 @@ function Dashboard(props) {
                     if (res.status === 200) {
                         setIsAuthenticated(true);
                         setCurrentUser(res.data);
-                        socket.emit('joinUser', res.data._id);
                         console.log("Successfully retrieved data!", res.data);
+                        //handshake with server ONLY when authenticated
+                        socket.emit('joinUser', res.data._id);
+                        
                     }
                 }).catch((err) => {
                     //else get the error and direct to login
@@ -275,9 +373,11 @@ function Dashboard(props) {
                 if (res.status === 200) {
                     //set current project to the one matches the id that we clicked on
                     setCurrentProject(res.data);
+                    if (width > 580){
                     setCurrentIssueList(res.data.issues);
                     //applying the current sorting method for consistency
                     handleSort(sortOption, res.data.issues);
+                    } 
                 }
             }).catch(error => {
                 setIsLoadingProject(false);
@@ -302,7 +402,6 @@ function Dashboard(props) {
                 if (res.status === 200) {
                     //set current issue to the one we clicked on
                     setCurrentIssue(res.data);
-                    console.log(res.data)
                 }
             }).catch(error => {
                 setIsLoadingIssue(false);
@@ -362,7 +461,7 @@ function Dashboard(props) {
                 if (res.status === 200) {
                     setCurrentUser(res.data);
                     console.log("Edited project name!");
-                    socket.emit('editProject', {project: currentProject,userId: currentUser._id});
+                    socket.emit('editProject', { project: currentProject, userId: currentUser._id });
                 }
             }).catch(error => {
                 setIsLoadingProject(false);
@@ -370,88 +469,6 @@ function Dashboard(props) {
             })
         }
     }
-
-    const prevProject=React.useRef('');
-    const prevIssue=React.useRef('');
-    //store previous currentProject state in prevProject
-    React.useEffect(()=>{
-        prevProject.current = currentProject;
-        prevIssue.current=currentIssue;
-    },[currentProject, currentIssue])
-
-    //realtime update from socketIo
-    React.useEffect(()=>{
-        socket.on("updateUserProjectRealtime", userData => {
-            setCurrentUser(userData);
-        })
-
-        socket.on("deleteUserProjectRealtime", data => {
-            const readableData = JSON.parse(JSON.stringify(data));
-            const user = readableData.userDetail;
-            const project = readableData.projectDetail;
-            
-            //if the previous project is being opened!
-            if (project._id === prevProject.current._id){
-                setCurrentIssueList([]);
-                setCurrentProject(null);
-                setCurrentIssue(null);
-            } 
-            setCurrentUser(user);
-        })
-       
-        socket.on("createIssueRealtime", projectData => {
-            //only update realtime IF AND ONLY IF user is in the same project and not having any issues open
-            if( prevProject.current && prevProject.current._id === projectData._id && !prevIssue.current){
-                setCurrentIssueList(projectData.issues);
-                console.log("Updated issue list since a user changes it!")
-            }
-        })
-
-        socket.on("modifyIssueRealtime", data => {
-            const readableData = JSON.parse(JSON.stringify(data));
-            const issueData = readableData.issueData;
-            const projectData = readableData.projectData;
-             //only update realtime IF AND ONLY IF user is in the same project and not having any issues open 
-            //OR having exactly that issue opened
-            if(prevProject.current && prevProject.current._id === projectData._id && !prevIssue.current){
-                handleClickOnProject(projectData._id);
-                console.log("Updated issue list since a user changes it!")
-            }else if (prevIssue.current && issueData._id === prevIssue.current._id)  {
-                setCurrentIssue(issueData);
-                console.log("Updated issue list since a user changes it!")
-            }
-        })
-
-        socket.on("deleteIssueRealtime", data=> {
-            const readableData = JSON.parse(JSON.stringify(data));  
-            const issueId = readableData.issueId;
-            const projectData = readableData.projectData;
-
-            //only update realtime IF AND ONLY IF user is in the same project and not having any issues open 
-            //OR having exactly the deleted issue opened
-            if(prevProject.current && prevProject.current._id === projectData._id && !prevIssue.current){
-                setCurrentIssueList(projectData.issues);
-                console.log("Updated issue list since a user changes it!")
-            }else if (prevIssue.current && issueId === prevIssue.current._id)  {
-                setCurrentIssue(null);
-                setCurrentIssueList(projectData.issues);
-                console.log("Updated issue list since a user changes it!")
-            }
-        })
-
-        socket.on("modifyCommentRealtime", data => {
-            const readableData = JSON.parse(JSON.stringify(data));
-            const issueData = readableData.issueData;
-             //only update realtime if  having exactly that issue opened  
-            if (prevIssue.current && issueData._id === prevIssue.current._id)  {
-                setCurrentIssue(issueData);
-                console.log("Updated issue comments since a user changes it!")
-            }
-        })
-
-
-    },[socket]);
-
 
     //DELETING A PROJECT
     async function handleDeleteProject(id) {
@@ -475,7 +492,7 @@ function Dashboard(props) {
                     if (res.status === 200) {
                         setCurrentUser(res.data);
                         setCurrentProject(null);
-                        socket.emit('deleteProject', {project: currentProject,userId: currentUser._id});
+                        socket.emit('deleteProject', { project: currentProject, userId: currentUser._id });
                         console.log("Deleted project!");
                     }
                 }).catch(error => {
@@ -519,7 +536,7 @@ function Dashboard(props) {
                     handleSort(sortOption, res.data.issues);
                     document.getElementById("formIssueToggler").click();
                     console.log("New issue submitted!");
-                    socket.emit('createIssue', {project: res.data, userId: currentUser._id});
+                    socket.emit('createIssue', { project: res.data, userId: currentUser._id });
                 }
             }).catch(error => {
                 setIsLoadingIssue(false);
@@ -528,6 +545,7 @@ function Dashboard(props) {
         }
     };
 
+    
     //EDITING A CURRENT ISSUE
     async function handleEditIssue(title, des, priority, solved, deadline, id) {
         setIsLoadingIssue(true);
@@ -554,7 +572,7 @@ function Dashboard(props) {
                 if (res.status === 200) {
                     setCurrentIssue(res.data)
                     console.log("Edited issue details!");
-                    socket.emit('modifyIssue', {project: currentProject, userId: currentUser._id, issue:res.data});
+                    socket.emit('modifyIssue', { project: currentProject, userId: currentUser._id, issue: res.data });
                 }
             }).catch(error => {
                 setIsLoadingIssue(false);
@@ -588,7 +606,7 @@ function Dashboard(props) {
                         setCurrentIssueList(res.data.issues);
                         setCurrentIssue(null);
                         console.log("Deleted issue successfully!");
-                        socket.emit('removeIssue', {project: res.data, userId: currentUser._id, issueId:id});
+                        socket.emit('removeIssue', { project: res.data, userId: currentUser._id, issueId: id });
                     }
                 }).catch(error => {
                     setIsLoadingIssue(false);
@@ -621,7 +639,7 @@ function Dashboard(props) {
                 if (res.status === 200) {
                     setCurrentProject(res.data);
                     //send the new project data (which includes the new user)
-                    socket.emit('editProject', {project: res.data, userId: currentUser._id});
+                    socket.emit('editProject', { project: res.data, userId: currentUser._id });
                     console.log("Added new user!")
                 }
             }).catch(error => {
@@ -655,7 +673,7 @@ function Dashboard(props) {
                         setCurrentIssue(null);
                         console.log(res.data);
                         //sending the old project (which still has the old user's name!)
-                        socket.emit('editProject', {project: currentProject, userId: currentUser._id});
+                        socket.emit('editProject', { project: currentProject, userId: currentUser._id });
                         console.log("Deleted user from project!")
                     }
                 }).catch(error => {
@@ -690,7 +708,7 @@ function Dashboard(props) {
                 if (res.status === 200) {
                     setCurrentIssue(res.data);
                     console.log("Assigned user to project!");
-                    socket.emit('assignUserIssue', {project: currentProject, userId: currentUser._id, issue:res.data});
+                    socket.emit('assignUserIssue', { project: currentProject, userId: currentUser._id, issue: res.data });
                 }
             }).catch(error => {
                 setIsLoadingIssue(false);
@@ -728,12 +746,10 @@ function Dashboard(props) {
                     setDisplayError(error.response.data);
                 })
             }
-        } else {
-            setIsLoadingIssue(false);
         }
     }
 
-    async function handleAddComment(issueId, comment){
+    async function handleAddComment(issueId, comment) {
         setIsLoadingIssue(true)
         await checkExpiry();
         if (localStorage.getItem("accessToken")) {
@@ -744,7 +760,7 @@ function Dashboard(props) {
                 method: "POST",
                 data: {
                     issueId: issueId,
-                   commentDetail: comment
+                    commentDetail: comment
                 },
                 url: "/api/addCommentToIssue",
                 withCredentials: true,
@@ -753,17 +769,16 @@ function Dashboard(props) {
                 if (res.status === 200) {
                     setCurrentIssue(res.data);
                     console.log("Added comment!");
-                    socket.emit('modifyComment', {project: currentProject, userId: currentUser._id, issue: res.data});
+                    socket.emit('modifyComment', { project: currentProject, userId: currentUser._id, issue: res.data });
                 }
             }).catch(error => {
                 setIsLoadingIssue(false);
-                console.log(error.response.data);
                 setDisplayError(error.response.data);
             })
         }
     }
 
-    async function handleDeleteComment(issueId, projectId, commentId){
+    async function handleDeleteComment(issueId, projectId, commentId) {
         setIsLoadingIssue(true)
         await checkExpiry();
         if (localStorage.getItem("accessToken")) {
@@ -774,8 +789,8 @@ function Dashboard(props) {
                 method: "DELETE",
                 data: {
                     issueId: issueId,
-                   projectId: projectId,
-                   commentId: commentId
+                    projectId: projectId,
+                    commentId: commentId
                 },
                 url: "/api/deleteCommentFromIssue",
                 withCredentials: true,
@@ -784,11 +799,10 @@ function Dashboard(props) {
                 if (res.status === 200) {
                     setCurrentIssue(res.data);
                     console.log("Deleted comment!");
-                    socket.emit('modifyComment', {project: currentProject, userId: currentUser._id, issue: res.data});
+                    socket.emit('modifyComment', { project: currentProject, userId: currentUser._id, issue: res.data });
                 }
             }).catch(error => {
                 setIsLoadingIssue(false);
-                console.log(error.response.data);
                 setDisplayError(error.response.data);
             })
         }
@@ -811,7 +825,7 @@ function Dashboard(props) {
                         loading={isLoadingLogOut} />
 
                     <div className="row dashboard" style={displayError ? { opacity: 0.7, pointerEvents: "none" } : null}>
-                        <div className="col-12 col-sm-5 col-md-4 display-column">
+                        <div className="col-12 col-sm-5 col-md-4 display-column projects">
                             <div className="heading-wrapper">
                                 <h4 >Projects
                                     {isLoadingProject ? <div className="loader"></div> : null}
@@ -835,6 +849,7 @@ function Dashboard(props) {
                             {currentUser.projects.map(project =>
                                 <DisplayProject
                                     key={project._id}
+                                    width={width}
                                     project={project}
                                     admins={currentProject ? currentProject.admins : null}
                                     users={currentProject ? currentProject.users : null}
@@ -844,143 +859,203 @@ function Dashboard(props) {
                                     deleteUser={deleteUserFromProject}
                                     handleClick={handleClickOnProject}
                                     handleDelete={handleDeleteProject}
-                                    handleEdit={handleEditProject} />
+                                    handleEdit={handleEditProject}
+                                    handleSmallScreenClickOnProject={()=>{
+                                        setCurrentIssueList(currentProject.issues);
+                                    }} />
                             )}
                         </div>
+                        {width < 580 && currentIssueList.length > 0 && currentProject || width > 580 ?
+                            <div className="col-12 col-sm-7 col-md-8 display-column issues">
+                                <div className="heading-wrapper">
+                                    <h4>Issues:
+                                        {currentIssue ?
+                                            <button className="function-button"
+                                                style={{ margin: "0", fontSize: "0.8rem", width: "4.5rem", marginLeft: "0.5rem" }}
+                                                onClick={() => {
+                                                    setCurrentIssue(null);
+                                                    handleClickOnProject(currentProject._id);
+                                                }}>
+                                                All issues
+                                            </button> : null}
+                                        {isLoadingIssue ? <div className="loader"></div> : null}
+                                    </h4>
 
-                        <div className="col-12 col-sm-7 col-md-8 display-column">
-                            <div className="heading-wrapper">
-                                <h4>Issues:
-                                    {currentIssue ?
-                                        <button className="function-button"
-                                            style={{ margin: "0", fontSize: "0.8rem", width: "4.5rem", marginLeft: "0.5rem" }}
-                                            onClick={() => {
-                                                setCurrentIssue(null);
-                                                handleClickOnProject(currentProject._id);
-                                            }}>
-                                            All issues
-                                        </button> : null}
-                                    {isLoadingIssue ? <div className="loader"></div> : null}
-                                </h4>
+                                    {currentProject ? currentIssue ? null :
+                                        <div style={{ display: "flex", justifyContent: "flex-end", width: "100%", height: "1rem" }}>
+                                            <div className="select-wrapper" style={{ width: "50%" }}>
+                                                <select id="issueSort" onChange={evt => {
+                                                    const newSortOption = evt.target.value;
+                                                    setSortOption(newSortOption);
+                                                    handleSort(newSortOption, currentIssueList)
 
-                                {currentProject ? currentIssue ? null :
-                                    <div style={{ display: "flex", alignItems: "center" }}>
+                                                }}
+                                                    defaultValue={""}
+                                                    style={{ margin: "0", padding: "0 0.5rem" }}>
+                                                    <option value="" disabled>Sort by</option>
+                                                    <option value="date-as" defaultValue>Oldest (default)</option>
+                                                    <option value="date-des">Newest </option>
+                                                    <option value="pri-as">Priority - lowest</option>
+                                                    <option value="pri-des">Priority - highest </option>
+                                                    {/* <option value="end-des">Ending soonest</option> */}
+                                                </select>
+                                                <span className="select-arrow ">
+                                                    <i className="fas fa-long-arrow-alt-down"></i>
+                                                </span>
 
-                                        <div className="select-wrapper">
-                                            <select id="issueSort" onChange={evt => {
-                                                const newSortOption = evt.target.value;
-                                                setSortOption(newSortOption);
-                                                handleSort(newSortOption, currentIssueList)
+                                            </div>
 
-                                            }}
-                                                defaultValue={""}
-                                                style={{ margin: "0", padding: "0 0.5rem" }}>
-                                                <option value="" disabled>Sort by</option>
-                                                <option value="date-as" defaultValue>Oldest (default)</option>
-                                                <option value="date-des">Newest </option>
-                                                <option value="pri-as">Priority - lowest</option>
-                                                <option value="pri-des">Priority - highest </option>
-                                                {/* <option value="end-des">Ending soonest</option> */}
-                                            </select>
-                                            <span className="select-arrow ">
-                                                <i className="fas fa-long-arrow-alt-down"></i>
-                                            </span>
-                                        </div>
+                                            {width < 580 ? null :
+                                                showDone ?
+                                                    <span
+                                                        className="state-indicator"
+                                                        style={{
+                                                            fontSize: "0.7rem", background: "transparent", color: "#77a186", margin: 0,
+                                                            border: "solid #77a186 0.01rem",
+                                                            transform: "translateY(-0.2rem)"
+                                                        }}
+                                                        onClick={() => setShowDone(prev => !prev)}>
+                                                        <p style={{
+                                                            color: "#77a186", transform: "translateY(-0.1rem)",
+                                                            textDecoration: "line-through",
+                                                            textDecorationThickness: "0.08rem"
+                                                        }}>
+                                                            Hide Done
+                                                        </p>
+                                                    </span>
+                                                    :
+                                                    <span
+                                                        className="state-indicator"
+                                                        style={{
+                                                            fontSize: "0.7rem", background: "#77a186", color: "#F8F9FD", margin: 0,
+                                                            transform: "translateY(-0.2rem)"
+                                                        }}
+                                                        onClick={() => setShowDone(prev => !prev)}>
+                                                        <p style={{ transform: "translateY(-0.05rem)" }}>Show Done</p>
+                                                    </span>}
+
+                                            <div className="icon-wrapper">
+                                                <i className="far fa-plus-square"
+                                                    id="formIssueToggler"
+                                                    data-toggle="collapse"
+                                                    data-target="#formIssue"
+                                                    aria-expanded="false"
+                                                    aria-controls="formIssue">
+                                                </i>
+                                            </div>
+
+                                        </div> : null}
+                                </div>
+
+                                {currentProject && width < 580 && !currentIssue ?
+                                    <div className="heading-wrapper">
                                         <button className="function-button"
                                             style={{ fontSize: "0.7rem", margin: "0 0.3rem", width: "5rem" }}
-                                            onClick={() => setShowDone(prev => !prev)}>
-                                            {!showDone ? "Show done" : "Hide done"}
+                                            onClick={() => {
+                                                setCurrentIssueList([]);
+                                            }}>
+                                            Projects
                                         </button>
-                                        <i className="far fa-plus-square"
-                                            id="formIssueToggler"
-                                            data-toggle="collapse"
-                                            data-target="#formIssue"
-                                            aria-expanded="false"
-                                            aria-controls="formIssue">
-                                        </i>
-
-                                    </div> : null}
-                            </div>
-
-                            {currentIssue ? null :
-                                <div className="form-issue-wrapper collapse " id="formIssue" >
-                                    <div className="form-issue " >
-                                        <input type="text" placeholder="Title" id="IssueTitle" required
-                                            value={newIssueTitle}
-                                            onChange={evt => setNewIssueTitle(evt.target.value)}>
-                                        </input>
-                                        <textarea placeholder="Description" id="issueDescription" required
-                                            value={newIssueDescription}
-                                            onChange={evt => setNewIssueDescription(evt.target.value)}>
-                                        </textarea>
-                                        <div className="select-wrapper">
-                                            <select id="issuePriority"
-                                                defaultValue={""}
-                                                required
-                                                onChange={evt => setNewIssuePriority(evt.target.value)}>
-                                                <option value="" disabled>Priority</option>
-                                                <option value="High" >High</option>
-                                                <option value="Medium">Medium</option>
-                                                <option value="Low">Low</option>
-                                            </select>
-                                            <span className="select-arrow ">
-                                                <i className="fas fa-long-arrow-alt-down"></i>
-                                            </span>
-                                        </div>
-                                        <div className="select-wrapper">
-                                            <select id="issueSolved"
-                                                defaultValue={""}
-                                                required
-                                                onChange={evt => setNewIssueSolved(evt.target.value)}>
-                                                <option value="" disabled>Issue state</option>
-                                                <option value="Unsolved" >Unsolved</option>
-                                                <option value="In Progress">In Progress</option>
-                                                <option value="Done">Done</option>
-                                            </select>
-                                            <span className="select-arrow ">
-                                                <i className="fas fa-long-arrow-alt-down"></i>
-                                            </span>
-                                        </div>
-                                        <div className="select-wrapper date-select">
-                                            <input type="datetime-local"
-                                                onChange={evt => setNewIssueDeadline(evt.target.value)}>
-                                            </input>
-                                            <i className="far fa-calendar-alt"></i>
-                                        </div>
-                                        <button onClick={handleSubmitNewIssue} 
-                                                className="function-button button-submit" 
-                                                type="submit">
-                                            Add
-                                            </button>
+                                        {showDone ?
+                                        <span
+                                            className="state-indicator"
+                                            style={{
+                                                fontSize: "0.7rem", background: "transparent", color: "#77a186", margin: 0,
+                                                border: "solid #77a186 0.01rem",
+                                                
+                                            }}
+                                            onClick={() => setShowDone(prev => !prev)}>
+                                            <p style={{
+                                                color: "#77a186", transform: "translateY(-0.1rem)",
+                                                textDecoration: "line-through",
+                                                textDecorationThickness: "0.08rem"
+                                            }}>
+                                                Hide Done
+                                            </p>
+                                        </span>
+                                        :
+                                        <span
+                                            className="state-indicator"
+                                            style={{
+                                                fontSize: "0.7rem", background: "#77a186", color: "#F8F9FD", margin: 0,
+                                                
+                                            }}
+                                            onClick={() => setShowDone(prev => !prev)}>
+                                            <p style={{ transform: "translateY(-0.05rem)" }}>Show Done</p>
+                                        </span>}
                                     </div>
-                                </div>}
-                            {currentIssue ?
-                                <DisplayIssue
-                                    issue={currentIssue}
-                                    currentUser={currentUser}
-                                    currentProject={currentProject}
-                                    clicked={true}
-                                    assignUser={assignUserToIssue}
-                                    removeUser={removeUserFromIssue}
-                                    handleClick={handleClickOnIssue}
-                                    handleDelete={handleDeleteIssue}
-                                    handleEdit={handleEditIssue}
-                                    handleAddComment={handleAddComment}
-                                    handleDeleteComment={handleDeleteComment}
-                                /> :
-                                currentProject ? showDone ? currentIssueList.map(issue =>
-                                    <>
-                                        <DisplayIssue
-                                            key={issue._id}
-                                            issue={issue}
-                                            currentUser={currentUser}
-                                            currentProject={currentProject}
-                                            clicked={false}
-                                            handleClick={handleClickOnIssue}
-                                        />
-                                    </>)
-                                    :
-                                    currentIssueList.filter(issue => issue.solved !== "Done").map(issue =>
+
+
+                                    : null}
+
+                                {currentIssue ? null :
+                                    <div className="form-issue-wrapper collapse " id="formIssue" >
+                                        <div className="form-issue " >
+                                            <input type="text" placeholder="Title" id="IssueTitle" required
+                                                value={newIssueTitle}
+                                                onChange={evt => setNewIssueTitle(evt.target.value)}>
+                                            </input>
+                                            <textarea placeholder="Description" id="issueDescription" required
+                                                value={newIssueDescription}
+                                                onChange={evt => setNewIssueDescription(evt.target.value)}>
+                                            </textarea>
+                                            <div className="select-wrapper">
+                                                <select id="issuePriority"
+                                                    defaultValue={""}
+                                                    required
+                                                    onChange={evt => setNewIssuePriority(evt.target.value)}>
+                                                    <option value="" disabled>Priority</option>
+                                                    <option value="High" >High</option>
+                                                    <option value="Medium">Medium</option>
+                                                    <option value="Low">Low</option>
+                                                </select>
+                                                <span className="select-arrow ">
+                                                    <i className="fas fa-long-arrow-alt-down"></i>
+                                                </span>
+                                            </div>
+                                            <div className="select-wrapper">
+                                                <select id="issueSolved"
+                                                    defaultValue={""}
+                                                    required
+                                                    onChange={evt => setNewIssueSolved(evt.target.value)}>
+                                                    <option value="" disabled>Issue state</option>
+                                                    <option value="Unsolved" >Unsolved</option>
+                                                    <option value="In Progress">In Progress</option>
+                                                    <option value="Done">Done</option>
+                                                </select>
+                                                <span className="select-arrow ">
+                                                    <i className="fas fa-long-arrow-alt-down"></i>
+                                                </span>
+                                            </div>
+                                            <div className="select-wrapper date-select">
+                                                <input type="datetime-local"
+                                                    onChange={evt => setNewIssueDeadline(evt.target.value)}>
+                                                </input>
+                                                <i className="far fa-calendar-alt"></i>
+                                            </div>
+                                            <button onClick={handleSubmitNewIssue}
+                                                className="function-button button-submit"
+                                                style={{height:"2rem"}}
+                                                type="submit">
+                                                Add
+                                            </button>
+                                        </div>
+                                    </div>}
+                                {currentIssue ?
+                                    <DisplayIssue
+                                        issue={currentIssue}
+                                        currentUser={currentUser}
+                                        currentProject={currentProject}
+                                        clicked={true}
+                                        assignUser={assignUserToIssue}
+                                        removeUser={removeUserFromIssue}
+                                        handleClick={handleClickOnIssue}
+                                        handleDelete={handleDeleteIssue}
+                                        handleEdit={handleEditIssue}
+                                        handleAddComment={handleAddComment}
+                                        handleDeleteComment={handleDeleteComment}
+                                    /> :
+                                    currentProject ? showDone ? currentIssueList.map(issue =>
                                         <>
                                             <DisplayIssue
                                                 key={issue._id}
@@ -991,12 +1066,24 @@ function Dashboard(props) {
                                                 handleClick={handleClickOnIssue}
                                             />
                                         </>)
-                                    :
-                                    <h5 style={{ fontSize: "1rem", padding: "0.5rem", color: "#B1BAC7" }}>
-                                        Choose a project to view issues
-                                    </h5>
-                            }
-                        </div>
+                                        :
+                                        currentIssueList.filter(issue => issue.solved !== "Done").map(issue =>
+                                            <>
+                                                <DisplayIssue
+                                                    key={issue._id}
+                                                    issue={issue}
+                                                    currentUser={currentUser}
+                                                    currentProject={currentProject}
+                                                    clicked={false}
+                                                    handleClick={handleClickOnIssue}
+                                                />
+                                            </>)
+                                        :
+                                        <h5 style={{ fontSize: "1rem", padding: "0.5rem", color: "#B1BAC7" }}>
+                                            Choose a project to view issues
+                                        </h5>
+                                }
+                            </div> : null}
                     </div>
                 </> : null}
         </div >

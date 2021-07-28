@@ -2,6 +2,7 @@ import React from 'react';
 
 function DisplayProject(props) {
     const { name, date, _id } = props.project;
+    const width = props.width;
     const [newName, setNewName] = React.useState("");
     const [isClickedEdit, setIsClickedEdit] = React.useState(false);
     const [showAddUserForm, setShowAddUserForm] = React.useState(false);
@@ -84,6 +85,10 @@ function DisplayProject(props) {
                                 aria-controls={customId}
                             >
                             </i>
+                            {width < 580? 
+                            <i className="fas fa-clipboard-list"
+                            onClick={()=>props.handleSmallScreenClickOnProject(_id)}
+                            ></i>:null}
                         </> : null}
                 </div>
             </div>
@@ -135,7 +140,7 @@ function DisplayProject(props) {
                         : null}
 
                     {props.clicked ? admins ? admins.map(admin =>
-                        <div className="content-section" style={{ margin: "0.15rem 0" }}>
+                        <div className="content-section" style={{ margin: "0.15rem 0" }} key={admin._id}>
                             <p>
                                 <span style={{
                                     background: "#FB7693", padding: "0.2rem 0.5rem",
@@ -148,7 +153,7 @@ function DisplayProject(props) {
                         </div>
                     ) : null : null}
                     {props.clicked ? users ? users.map(user =>
-                        <div className="content-section" style={{ margin: "0.15rem 0" }}>
+                        <div className="content-section" style={{ margin: "0.15rem 0" }} key={user._id}>
                             <p>
                                 <span style={{
                                     background: "#12111a", color: "#B1BAC7", padding: "0.2rem 0.5rem",

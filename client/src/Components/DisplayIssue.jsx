@@ -12,7 +12,7 @@ function DisplayIssue(props) {
     const [modifiedIssueDeadline, setModifiedIssueDeadline] = React.useState(deadline);
     const [showAssignUserForm, setShowAssignUserForm] = React.useState(false);
     const [addedComment, setAddedComment] = React.useState(null);
-    const [showAddComments, setShowAddComments]=React.useState(false);
+    const [showAddComments, setShowAddComments] = React.useState(false);
     const [assignedUser, setAssignedUser] = React.useState(null);
     const [isAdmin, setIsAdmin] = React.useState(false);
     const [isAssignedUser, setIsAssignedUser] = React.useState(false);
@@ -53,7 +53,7 @@ function DisplayIssue(props) {
         if (Date.parse(deadline) > Date.now()) {
             const difference = Date.parse(deadline) - Date.now()
             if (difference > 86400000) {
-                return (Math.floor(difference / 86400000) + " days(s) left")
+                return (Math.floor(difference / 86400000) + " day(s) left")
             } else if (difference > 3600000) {
                 return (Math.floor(difference / 3600000) + " hour(s) left")
             } else if (difference > 60000) {
@@ -100,7 +100,7 @@ function DisplayIssue(props) {
     const customId = "issueDes" + _id;
 
     return (
-        <div className="display-content-wrapper" >
+        <div className={props.clicked ? " issue-clicked display-content-wrapper" : "display-content-wrapper"}>
             <div className="content-section">
                 {isClickedEdit ?
                     <form className="display-content form-edit">
@@ -133,44 +133,46 @@ function DisplayIssue(props) {
                                         <i className="fas fa-long-arrow-alt-down"></i>
                                     </span>
                                 </div>
-                                <div className="select-wrapper date-select">
-                                    <input type="datetime-local" className="edit-input"
-                                        style={{ width: "100%", paddingRight: "0" }}
-                                        onChange={evt => setModifiedIssueDeadline(evt.target.value)}>
-                                    </input>
-                                    <i className="far fa-calendar-alt" style={{ background: "#12111a" }}></i>
-                                </div>
                             </>
                             : null}
                         {isAssignedUser ?
-                            <>
-                                <div className="select-wrapper">
-                                    <select
-                                        onChange={evt => setModifiedIssueSolved(evt.target.value)}
-                                        className="edit-input select"
-                                        defaultValue={solved}>
-                                        <option value="" disabled>Issue state</option>
-                                        <option value="Unsolved" >Unsolved</option>
-                                        <option value="In Progress">In Progress</option>
-                                        <option value="Done">Done</option>
-                                    </select>
-                                    <span className="select-arrow ">
-                                        <i className="fas fa-long-arrow-alt-down"></i>
-                                    </span>
-                                </div>
 
-                                <button className="function-button button-submit"
-                                    type="submit"
-                                    onClick={handleEditConfirm}>
-                                    Confirm
-                                </button>
-                            </>
+                            <div className="select-wrapper">
+                                <select
+                                    onChange={evt => setModifiedIssueSolved(evt.target.value)}
+                                    className="edit-input select"
+                                    defaultValue={solved}>
+                                    <option value="" disabled>Issue state</option>
+                                    <option value="Unsolved" >Unsolved</option>
+                                    <option value="In Progress">In Progress</option>
+                                    <option value="Done">Done</option>
+                                </select>
+                                <span className="select-arrow ">
+                                    <i className="fas fa-long-arrow-alt-down"></i>
+                                </span>
+                            </div>
                             : null}
+
+                        {isAdmin ?
+                            <div className="select-wrapper date-select">
+                                <input type="datetime-local" className="edit-input"
+                                    style={{ width: "100%", paddingRight: "0" }}
+                                    onChange={evt => setModifiedIssueDeadline(evt.target.value)}>
+                                </input>
+                                <i className="far fa-calendar-alt" style={{ background: "#12111a" }}></i>
+                            </div> : null}
+
+                        <button className="function-button button-submit"
+                            type="submit"
+                            onClick={handleEditConfirm}>
+                            Confirm
+                        </button>
                     </form>
                     :
                     <>
                         <div className="display-indicator">
                             <span
+                                className="state-indicator"
                                 style={{
                                     backgroundColor: priority === "High" ? "#BF4B54"
                                         : priority === "Medium" ? "#b35e46"
@@ -179,6 +181,7 @@ function DisplayIssue(props) {
                                 <p>{priority}</p>
                             </span>
                             <span
+                                className="state-indicator"
                                 style={{
                                     backgroundColor: solved === "Unsolved" ? "#b3844f"
                                         : solved === "In Progress" ? "#17A0BF"
@@ -227,7 +230,6 @@ function DisplayIssue(props) {
             </div>
             {props.clicked ?
                 <div className="display-content" id={customId}>
-
                     <div className="display-content">
                         <span className="content-section">
                             <h6>Description</h6>
@@ -259,7 +261,7 @@ function DisplayIssue(props) {
                         {users.length === 0 ? <p>None</p> :
                             <div className="content-section">
                                 {users.map(user =>
-                                    <span style={{ display: "flex", margin: "0 0.5rem" }}>
+                                    <span key={user._id} style={{ display: "flex", margin: "0 0.5rem" }}>
                                         <p>
                                             <span style={{
                                                 color: "#12111a", background: "#91DEFB", padding: "0.2rem 0.5rem",
@@ -318,37 +320,39 @@ function DisplayIssue(props) {
                         <span className="content-section">
                             <h6>Comments</h6>
                             <div className="icon-wrapper">
-                                <i className="fas fa-plus-circle small-icon" onClick={()=>setShowAddComments(prev => !prev)}></i>
+                                <i className="fas fa-plus-circle small-icon" onClick={() => setShowAddComments(prev => !prev)}></i>
                             </div>
                             <figure className="border-design grey">
                             </figure>
                         </span>
-                        {showAddComments?
-                        <div className="content-section">
-                            <textarea
-                                className="edit-input"
-                                placeholder="Add a comment"
-                                value={addedComment}
-                                onChange={evt => setAddedComment(evt.target.value)}
-                                required>
-                            </textarea>
-                            <button className="function-button"
-                                onClick={handleAddComment}
-                                style={{ width: "4.5rem", fontSize: "0.8rem", height: "2rem", margin: "0.5rem" }}>
-                                Add
-                            </button>
-                        </div>
-                        :null}
+                        {showAddComments ?
+                            <div className="content-section">
+                                <textarea
+                                    className="edit-input"
+                                    placeholder="Add a comment"
+                                    value={addedComment}
+                                    onChange={evt => setAddedComment(evt.target.value)}
+                                    required>
+                                </textarea>
+                                <button className="function-button"
+                                    onClick={handleAddComment}
+                                    style={{ width: "4.5rem", fontSize: "0.8rem", height: "2rem", margin: "0.5rem" }}>
+                                    Add
+                                </button>
+                            </div>
+                            : null}
                         {comments ? comments.map(comment =>
                             //Getting the date object of date created
                             <div className="content-section">
-                                <div className="icon-wrapper">
-                                    <i className="far fa-trash-alt small-icon"
-                                        id={"comment" + comment._id}
-                                        onClick={e => handleDeleteComment("comment" + comment._id, e)} >
+                                {isAdmin ?
+                                    <div className="icon-wrapper">
+                                        <i className="far fa-trash-alt small-icon"
+                                            id={"comment" + comment._id}
+                                            onClick={e => handleDeleteComment("comment" + comment._id, e)} >
 
-                                    </i>
-                                </div>
+                                        </i>
+                                    </div>
+                                    : null}
                                 <p style={{ background: "#474559", borderRadius: "15px", padding: "0.1rem 0.5rem" }}>
                                     {comment.details}
                                 </p>

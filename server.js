@@ -15,8 +15,7 @@ const io = require('socket.io')(http, {
 });
 // Load User model
 const User = require("./models/User").User;
-const Project = require("./models/User").Project;
-const Issue = require("./models/User").Issue;
+
 
 //DB
 const db = process.env.MONGODB_URI;

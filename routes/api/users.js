@@ -32,7 +32,7 @@ const generateAccessToken = (user) => {
 
 const generateRefreshToken = (user) => {
     return jwt.sign({ id: user.id, name: user.name, email: user.email },
-        process.env.SECRETREFRESHKEY, { expiresIn: '60d' });
+        process.env.SECRETREFRESHKEY, { expiresIn: '1d' });
 };
 
 //middleware to verify the user's identity

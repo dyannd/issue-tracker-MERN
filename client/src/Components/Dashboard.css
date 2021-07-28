@@ -7,6 +7,7 @@ orange: #b35e46
 red:#BF4B54
 lt orange - brown: #b3844f
 green: #77a186
+light navy:#474559
 
 content-section: flex horizontally
 display-content: flex vertically
@@ -84,10 +85,13 @@ display-content: flex vertically
     align-items: center;
 }
 
+
+/**for all the icons**/
+
 i {
     width: 1rem;
     height: 1rem;
-    transform: scale(1.2, 1.2);
+    transform: scale(1.1, 1.1);
     margin: 0 0.5rem;
     text-align: center;
     cursor: pointer;
@@ -231,15 +235,19 @@ option {
     color: #B1BAC7;
 }
 
+.display-content-wrapper:hover {
+    background-color: #474559;
+}
+
 .display-content-wrapper h5 {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: bold;
     margin: 0.3rem 0;
     cursor: pointer;
 }
 
 .display-content-wrapper h6 {
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: bold;
     margin: auto 0;
     margin-right: 0.2rem;
@@ -259,6 +267,14 @@ option {
     opacity: 1;
     transition: all 0.5s;
     color: #12111a;
+}
+
+.project-clicked:hover {
+    background-color: #91DEFB;
+}
+
+.issue-clicked:hover {
+    background-color: transparent;
 }
 
 
@@ -289,7 +305,7 @@ option {
     text-align: center;
 }
 
-.display-indicator span {
+.state-indicator {
     width: 5.5rem;
     height: 1.3rem;
     border-radius: 10px;
@@ -298,8 +314,11 @@ option {
     margin: 0.1rem 0;
 }
 
-.display-indicator p {
+.state-indicator p {
     color: #F8F9FD;
+    padding: 0;
+    margin: auto;
+    text-align: center;
 }
 
 .loader {
@@ -323,7 +342,7 @@ option {
 }
 
 
-/**For editing the isses**/
+/**For the forms and inputs needed for editing tasks**/
 
 .form-edit {
     display: flex;
@@ -392,8 +411,11 @@ textarea {
     background-color: #B1BAC7;
 }
 
+
+/**THE POPUP DISPLAY WHEN THINGS GET UGLY**/
+
 .pop-up {
-    position: absolute;
+    position: fixed;
     border: solid 0.05rem #91DEFB;
     z-index: 1;
     margin: auto;
@@ -422,4 +444,13 @@ textarea {
     font-size: 0.8rem;
     width: 4.5rem;
     height: 1.6rem;
+}
+
+@media (max-width: 580px) {
+    .issues {
+        position: absolute;
+        z-index: 1;
+        background: #12111a;
+        min-height: 92vh;
+    }
 }

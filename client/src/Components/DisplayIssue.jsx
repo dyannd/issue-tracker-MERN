@@ -4,6 +4,7 @@ function DisplayIssue(props) {
     const { title, description, priority, solved, deadline, _id, date, users, comments } = props.issue;
     const projectAdmins = props.currentProject.admins;
     const projectUsers = props.currentProject.users;
+    const width = props.width;
     const [isClickedEdit, setIsClickedEdit] = React.useState(false);
     const [modifiedIssueTitle, setModifiedIssueTitle] = React.useState(title);
     const [modifiedIssueDescription, setModifiedIssueDescription] = React.useState(description);
@@ -71,7 +72,8 @@ function DisplayIssue(props) {
     function handleEditConfirm(evt) {
         evt.preventDefault();
         setIsClickedEdit(false);
-        props.handleEdit(modifiedIssueTitle, modifiedIssueDescription, modifiedIssuePriority, modifiedIssueSolved, modifiedIssueDeadline, _id);
+        props.handleEdit(modifiedIssueTitle, modifiedIssueDescription,
+            modifiedIssuePriority, modifiedIssueSolved, modifiedIssueDeadline, _id);
     }
 
     function handleAssignUserToIssue(evt) {
@@ -103,7 +105,7 @@ function DisplayIssue(props) {
         <div className={props.clicked ? " issue-clicked display-content-wrapper" : "display-content-wrapper"}>
             <div className="content-section">
                 {isClickedEdit ?
-                    <form className="display-content form-edit">
+                    <div className="display-content form-edit">
                         {isAdmin ?
                             <>
                                 <input className="edit-input"
@@ -163,11 +165,10 @@ function DisplayIssue(props) {
                             </div> : null}
 
                         <button className="function-button button-submit"
-                            type="submit"
                             onClick={handleEditConfirm}>
                             Confirm
                         </button>
-                    </form>
+                    </div>
                     :
                     <>
                         <div className="display-indicator">
@@ -192,10 +193,10 @@ function DisplayIssue(props) {
                         </div>
 
 
-                        <div className="display-content"
+                        <div className="display-content "
                             style={{ paddingLeft: "0.5rem" }}>
                             <h5 onClick={handleClick}> {title}</h5>
-                            <div className="content-section" style={{ margin: 0 }}>
+                            <div className="content-section create-deadline" style={{ margin: 0 }}>
                                 <p onClick={handleClick} >
                                     Created:{" "}
                                     {getMMDDYYYY(date)}
@@ -214,17 +215,21 @@ function DisplayIssue(props) {
 
 
                 {props.clicked ?
-                    <div className="icon-wrapper">
+                    <div className={width < 580 ? "" : "icon-wrapper"} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                         {isAdmin ?
-                            <i className="far fa-trash-alt" onClick={() => props.handleDelete(_id)} ></i>
+                            <div className="icon-wrapper" style={{ margin: width < 580 ? "0.8rem 0 0.8rem 0" : "" }}>
+                                <i className="far fa-trash-alt" onClick={() => props.handleDelete(_id)} ></i>
+                            </div>
                             : null}
                         {isAssignedUser ?
-                            <i className="far fa-edit"
-                                onClick={() => {
-                                    setIsClickedEdit(prev => !prev)
-                                }}
-                                style={{ color: isClickedEdit ? "#77a186" : "" }}>
-                            </i>
+                            <div className="icon-wrapper">
+                                <i className="far fa-edit"
+                                    onClick={() => {
+                                        setIsClickedEdit(prev => !prev)
+                                    }}
+                                    style={{ color: isClickedEdit ? "#77a186" : "", margin: width < 580 ? "" : "", flex: 1 }}>
+                                </i>
+                            </div>
                             : null}
                     </div> : null}
             </div>
@@ -289,7 +294,7 @@ function DisplayIssue(props) {
                                         className="select edit-input"
                                         required
                                         defaultValue={""}
-                                        style={{ margin: 0, width: "7rem" }}>
+                                        style={{ margin: 0, width: "10rem" }}>
 
                                         <option disabled value="">Available users</option>
                                         {projectAdmins ? projectAdmins.map(admin =>

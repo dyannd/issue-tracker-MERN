@@ -46,6 +46,10 @@ function DisplayProject(props) {
         evt.preventDefault();
         props.deleteUser(id.split("added")[1], _id)
     }
+
+    function handleSmallScreenClickOnProject(){
+        props.handleSmallScreenClickOnProject();
+    }
     //create custom Id bc bootstrap doesnt support id starting with numbers
     const customId = "projectUsers" + _id;
     return (
@@ -87,7 +91,7 @@ function DisplayProject(props) {
                             </i>
                             {width < 580? 
                             <i className="fas fa-clipboard-list"
-                            onClick={()=>props.handleSmallScreenClickOnProject(_id)}
+                            onClick={handleSmallScreenClickOnProject}
                             ></i>:null}
                         </> : null}
                 </div>

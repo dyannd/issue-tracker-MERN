@@ -312,6 +312,8 @@ option {
     font-size: 0.8rem;
     padding: 0.1rem;
     margin: 0.1rem 0;
+    display: flex;
+    align-items: center;
 }
 
 .state-indicator p {
@@ -452,5 +454,39 @@ textarea {
         z-index: 1;
         background: #12111a;
         min-height: 92vh;
+    }
+    i {
+        transform: scale(1.2, 1.2);
+    }
+    .heading-wrapper h4 {
+        font-size: 1.3rem;
+    }
+    .display-content-wrapper h5 {
+        font-size: 1.2rem;
+    }
+    .display-content-wrapper h6 {
+        font-size: 1.1rem;
+    }
+    .display-content-wrapper p {
+        font-size: 0.9rem;
+    }
+    .state-indicator {
+        height: 1.6rem;
+    }
+    .create-deadline {
+        flex-direction: column;
+    }
+    .edit-input {
+        font-size: 0.9rem;
+        height: 2rem;
+        margin: 0.5rem 0;
+    }
+    textarea.edit-input {
+        height: 6rem;
+    }
+    .function-button {
+        height: 1.8rem;
+        width: 8rem !important;
+        font-size: 0.9rem !important;
     }
 }

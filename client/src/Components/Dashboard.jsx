@@ -31,8 +31,9 @@ function Dashboard(props) {
     const [isLoadingLogOut, setIsLoadingLogOut] = useState(false);
     const [showDone, setShowDone] = useState(true);
     const [displayError, setDisplayError] = useState(null);
+    const [displayIssuesOnMobile, setDisplayIssesOnMobile] = useState(false);
     const history = useHistory();
-    const SERVER =  "https://mernissuetracker.herokuapp.com/";
+    const SERVER = "https://mernissuetracker.herokuapp.com/";
     // "localhost:8888/";
     const socket = io(SERVER);
 
@@ -314,7 +315,7 @@ function Dashboard(props) {
                         console.log("Successfully retrieved data!", res.data);
                         //handshake with server ONLY when authenticated
                         socket.emit('joinUser', res.data._id);
-                        
+
                     }
                 }).catch((err) => {
                     //else get the error and direct to login
@@ -373,11 +374,11 @@ function Dashboard(props) {
                 if (res.status === 200) {
                     //set current project to the one matches the id that we clicked on
                     setCurrentProject(res.data);
-                    if (width > 580){
-                    setCurrentIssueList(res.data.issues);
-                    //applying the current sorting method for consistency
-                    handleSort(sortOption, res.data.issues);
-                    } 
+                    if (width > 580) {
+                        setCurrentIssueList(res.data.issues);
+                        //applying the current sorting method for consistency
+                        handleSort(sortOption, res.data.issues);
+                    }
                 }
             }).catch(error => {
                 setIsLoadingProject(false);
@@ -545,7 +546,7 @@ function Dashboard(props) {
         }
     };
 
-    
+
     //EDITING A CURRENT ISSUE
     async function handleEditIssue(title, des, priority, solved, deadline, id) {
         setIsLoadingIssue(true);
@@ -860,12 +861,14 @@ function Dashboard(props) {
                                     handleClick={handleClickOnProject}
                                     handleDelete={handleDeleteProject}
                                     handleEdit={handleEditProject}
-                                    handleSmallScreenClickOnProject={()=>{
+                                    handleSmallScreenClickOnProject={() => {
+                                        setDisplayIssesOnMobile(true);
                                         setCurrentIssueList(currentProject.issues);
+                                        console.log("Hello");
                                     }} />
                             )}
                         </div>
-                        {width < 580 && currentIssueList.length > 0 && currentProject || width > 580 ?
+                        {width < 580 && currentProject && displayIssuesOnMobile || width > 580 ?
                             <div className="col-12 col-sm-7 col-md-8 display-column issues">
                                 <div className="heading-wrapper">
                                     <h4>Issues:
@@ -952,37 +955,37 @@ function Dashboard(props) {
                                         <button className="function-button"
                                             style={{ fontSize: "0.7rem", margin: "0 0.3rem", width: "5rem" }}
                                             onClick={() => {
-                                                setCurrentIssueList([]);
+                                                setDisplayIssesOnMobile(false);
                                             }}>
                                             Projects
                                         </button>
                                         {showDone ?
-                                        <span
-                                            className="state-indicator"
-                                            style={{
-                                                fontSize: "0.7rem", background: "transparent", color: "#77a186", margin: 0,
-                                                border: "solid #77a186 0.01rem",
-                                                
-                                            }}
-                                            onClick={() => setShowDone(prev => !prev)}>
-                                            <p style={{
-                                                color: "#77a186", transform: "translateY(-0.1rem)",
-                                                textDecoration: "line-through",
-                                                textDecorationThickness: "0.08rem"
-                                            }}>
-                                                Hide Done
-                                            </p>
-                                        </span>
-                                        :
-                                        <span
-                                            className="state-indicator"
-                                            style={{
-                                                fontSize: "0.7rem", background: "#77a186", color: "#F8F9FD", margin: 0,
-                                                
-                                            }}
-                                            onClick={() => setShowDone(prev => !prev)}>
-                                            <p style={{ transform: "translateY(-0.05rem)" }}>Show Done</p>
-                                        </span>}
+                                            <span
+                                                className="state-indicator"
+                                                style={{
+                                                    fontSize: "0.7rem", background: "transparent", color: "#77a186", margin: 0,
+                                                    border: "solid #77a186 0.01rem",
+
+                                                }}
+                                                onClick={() => setShowDone(prev => !prev)}>
+                                                <p style={{
+                                                    color: "#77a186",
+                                                    textDecoration: "line-through",
+                                                    textDecorationThickness: "0.08rem"
+                                                }}>
+                                                    Hide Done
+                                                </p>
+                                            </span>
+                                            :
+                                            <span
+                                                className="state-indicator"
+                                                style={{
+                                                    fontSize: "0.7rem", background: "#77a186", color: "#F8F9FD", margin: 0,
+
+                                                }}
+                                                onClick={() => setShowDone(prev => !prev)}>
+                                                <p>Show Done</p>
+                                            </span>}
                                     </div>
 
 
@@ -993,15 +996,18 @@ function Dashboard(props) {
                                         <div className="form-issue " >
                                             <input type="text" placeholder="Title" id="IssueTitle" required
                                                 value={newIssueTitle}
+                                                className="edit-input"
                                                 onChange={evt => setNewIssueTitle(evt.target.value)}>
                                             </input>
                                             <textarea placeholder="Description" id="issueDescription" required
+                                                className="edit-input"
                                                 value={newIssueDescription}
                                                 onChange={evt => setNewIssueDescription(evt.target.value)}>
                                             </textarea>
                                             <div className="select-wrapper">
                                                 <select id="issuePriority"
                                                     defaultValue={""}
+                                                    className="edit-input"
                                                     required
                                                     onChange={evt => setNewIssuePriority(evt.target.value)}>
                                                     <option value="" disabled>Priority</option>
@@ -1017,6 +1023,7 @@ function Dashboard(props) {
                                                 <select id="issueSolved"
                                                     defaultValue={""}
                                                     required
+                                                    className="edit-input"
                                                     onChange={evt => setNewIssueSolved(evt.target.value)}>
                                                     <option value="" disabled>Issue state</option>
                                                     <option value="Unsolved" >Unsolved</option>
@@ -1029,13 +1036,14 @@ function Dashboard(props) {
                                             </div>
                                             <div className="select-wrapper date-select">
                                                 <input type="datetime-local"
+                                                    className="edit-input"
                                                     onChange={evt => setNewIssueDeadline(evt.target.value)}>
                                                 </input>
                                                 <i className="far fa-calendar-alt"></i>
                                             </div>
                                             <button onClick={handleSubmitNewIssue}
                                                 className="function-button button-submit"
-                                                style={{height:"2rem"}}
+                                                style={{ height: "2rem" }}
                                                 type="submit">
                                                 Add
                                             </button>
@@ -1043,6 +1051,7 @@ function Dashboard(props) {
                                     </div>}
                                 {currentIssue ?
                                     <DisplayIssue
+                                        width={width}
                                         issue={currentIssue}
                                         currentUser={currentUser}
                                         currentProject={currentProject}

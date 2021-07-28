@@ -7,7 +7,7 @@ import DisplayProject from './DisplayProject';
 import DisplayIssue from './DisplayIssue';
 import PopUp from './PopUp';
 import './Dashboard.css';
-import {io} from 'socket.io-client';
+import io from 'socket.io-client';
 
 
 function Dashboard(props) {
@@ -32,7 +32,7 @@ function Dashboard(props) {
     const [showDone, setShowDone] = React.useState(true);
     const [displayError, setDisplayError] = React.useState(null);
     const history = useHistory();
-    const SERVER = "localhost:8888/" || "https://mernissuetracker.herokuapp.com/";
+    const SERVER = "https://mernissuetracker.herokuapp.com/dashboard";
     const socket = io(SERVER);
 
     /************************MIDDLEWARE*********************** */

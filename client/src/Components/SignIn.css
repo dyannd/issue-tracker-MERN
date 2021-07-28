@@ -106,7 +106,7 @@ input:-webkit-autofill {
     border-radius: 50%;
     width: 1.5rem;
     height: 1.5rem;
-    animation: spin 2s infinite;
+    animation: spin 1s ease infinite;
 }
 
 @keyframes spin {

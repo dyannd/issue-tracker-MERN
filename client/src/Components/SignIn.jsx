@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './SignIn.css';
 import axios from 'axios';
 import { BrowserRouter as Router, Route, Switch, useHistory } from 'react-router-dom';
@@ -6,25 +6,26 @@ import { BrowserRouter as Router, Route, Switch, useHistory } from 'react-router
 function SignIn(props) {
   const history = useHistory();
   //Make states
-  const [name, setName] = React.useState("");
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [password2, setPassword2] = React.useState("");
-  const [errors, setErrors] = React.useState({});
-  const [hasAccount, setHasAccount] = React.useState(true);
-  const [isLoading, setIsLoading] = React.useState(false);
-
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [password2, setPassword2] = useState("");
+  const [errors, setErrors] = useState({});
+  const [hasAccount, setHasAccount] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
 
   //handle log in route
-  function handleLogin(event) {
-    event.preventDefault();
+  function handleLogin(event, opt) {
+    if (opt!=="demo"){
+      event.preventDefault();
+    }
     setIsLoading(true);
     axios({
       method: "POST",
       data: {
-        email: email,
-        password: password
+        email: opt==="demo" ? "demo@demo.com" : email,
+        password: opt==="demo"  ? "demodemo" : password
       },
       url: "/api/login",
       withCredentials: true
@@ -126,25 +127,31 @@ function SignIn(props) {
           <div className="button-wrapper">
             {hasAccount ? (
               <>
-                <div style={{  display: "flex", flexDirection:"column" }}>
+                <div style={{ display: "flex", flexDirection: "column" }}>
                   <p className="switcher-text"> Just got here?
                     <span className="click-text"
                       onClick={() => {
                         setHasAccount(prev => !prev);
                         setErrors({});
                       }}>
-                      {" "}Join Us!
+                      {" "}Join Us{" "}
                     </span>
                   </p>
                   <button className="function-button sign-button" type="submit" onClick={handleLogin}>
                     {isLoading ? <div className="loader-signin"></div> : "Sign in"}
+                  </button>
+                  <button className="function-button sign-button" type="button" style={{margin:0}}
+                    onClick={(e) => {
+                      handleLogin(e, "demo");
+                    }}>
+                    {isLoading ? <div className="loader-signin"></div> : "Try Demo"}
                   </button>
                 </div>
 
 
               </>
             ) : <>
-              <div style={{ display: "flex", flexDirection:"column" }}>
+              <div style={{ display: "flex", flexDirection: "column" }}>
                 <p className="switcher-text"> Have an account?
                   <span className="click-text"
                     onClick={() => {

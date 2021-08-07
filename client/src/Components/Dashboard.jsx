@@ -32,14 +32,22 @@ function Dashboard(props) {
     const [showDone, setShowDone] = useState(true);
     const [displayError, setDisplayError] = useState(null);
     const [displayIssuesOnMobile, setDisplayIssesOnMobile] = useState(false);
+    const [noti, setNoti] = useState([]);
     const history = useHistory();
     const SERVER = "https://mernissuetracker.herokuapp.com/";
+    // "https://mernissuetracker.herokuapp.com/"
     // "localhost:8888/";
     const socket = io(SERVER);
 
     //state for getting the windows'width
     const [width, setWidth] = useState(window.innerWidth);
 
+    //resize listener
+    React.useEffect(() => {
+        window.addEventListener("resize", () => {
+            setWidth(window.innerWidth);
+        })
+    }, [])
 
     /************************MIDDLEWARE*********************** */
     /**CHECK EXPIRY MUST BE USED WITH EVERY FUNCTION THAT MAKES API CALLS */
@@ -173,6 +181,7 @@ function Dashboard(props) {
                 }
             }
         }
+        //the real sorting function
         function sortingIssue() {
             //create a clone of current issue list so it isnt get mutated
             const sorted = [...currentIssueList];
@@ -212,9 +221,13 @@ function Dashboard(props) {
 
     /**GET REALTIME UPDATES FROM SOCKET IO */
     useEffect(() => {
-        //for updating the project, React takes modded user info and set the state
+        //for updating the project, React takes modded user info and set the state. the socket 
+        //listens for tasks like adding user to prj, modifying proj, and deleting project
         socket.on("updateUserProjectRealtime", userData => {
             setCurrentUser(userData);
+            setCurrentProject(null);
+            //update noti
+            setNoti(userData.notifications);
         })
 
         //for deleting the project, React takes modded user info and the deleted project id
@@ -229,6 +242,7 @@ function Dashboard(props) {
                 setCurrentProject(null);
                 setCurrentIssue(null);
             }
+            //set the current user as received from socket.
             setCurrentUser(user);
         })
 
@@ -275,6 +289,33 @@ function Dashboard(props) {
             }
         })
 
+        //listens for any new assignment to an issue from an admin
+        socket.on("assignUserIssueRealtime", proj => {
+            //only update if user has the same project opened
+            if (prevProject.current && prevProject.current._id === proj._id && !prevIssue.current) {
+                setCurrentIssueList(proj.issues);
+                console.log("An admin added you to the issue!");
+            }
+        });
+
+        //listens for removal from the project by an admin
+        socket.on("removeUserIssueRealtime", data => {
+            const readableData = JSON.parse(JSON.stringify(data));
+            const issueId = readableData.issueId;
+            const projectData = readableData.projectData;
+            //if user has the same project opened 
+            if (prevProject.current && prevProject.current._id === projectData._id && !prevIssue.current) {
+                setCurrentIssueList(projectData.issues);
+                console.log("An admin removed you from an issue!");
+            }
+            //if user has the same issue opened -> close that issue 
+            else if (prevIssue.current && issueId === prevIssue.current._id) {
+                setCurrentIssue(null);
+                setCurrentIssueList(projectData.issues);
+                console.log("An admin removed you from an issue!")
+            }
+        });
+
         //** adding n deleting comments will display it to all users in the issue */
         socket.on("modifyCommentRealtime", data => {
             const readableData = JSON.parse(JSON.stringify(data));
@@ -284,6 +325,11 @@ function Dashboard(props) {
                 setCurrentIssue(issueData);
                 console.log("Updated issue comments since a user changes it!")
             }
+        })
+
+        //updating notifications
+        socket.on("updateNoti", user => {
+            setNoti(user.notifications);
         })
     }, [socket]);
 
@@ -312,6 +358,7 @@ function Dashboard(props) {
                     if (res.status === 200) {
                         setIsAuthenticated(true);
                         setCurrentUser(res.data);
+                        setNoti(res.data.notifications);
                         console.log("Successfully retrieved data!", res.data);
                         //handshake with server ONLY when authenticated
                         socket.emit('joinUser', res.data._id);
@@ -619,7 +666,7 @@ function Dashboard(props) {
         }
     }
 
-    async function addUserToProject(id, addedEmail, addedRole) {
+    async function addUserToProject(id, name, addedEmail, addedRole) {
         setIsLoadingProject(true);
         await checkExpiry();
         if (localStorage.getItem("accessToken")) {
@@ -632,6 +679,7 @@ function Dashboard(props) {
                     addedEmail: addedEmail,
                     addedRole: addedRole,
                     projectId: id,
+                    projectName: name,
                 },
                 url: "/api/addUserToProject",
                 withCredentials: true,
@@ -641,6 +689,7 @@ function Dashboard(props) {
                     setCurrentProject(res.data);
                     //send the new project data (which includes the new user)
                     socket.emit('editProject', { project: res.data, userId: currentUser._id });
+                    console.log(res.data);
                     console.log("Added new user!")
                 }
             }).catch(error => {
@@ -650,7 +699,7 @@ function Dashboard(props) {
         }
     }
 
-    async function deleteUserFromProject(userId, projectId) {
+    async function deleteUserFromProject(userId, projectId, projectName) {
         setIsLoadingProject(true);
         await checkExpiry();
         const deleteOption = window.confirm("Confirm Deletion?");
@@ -664,6 +713,7 @@ function Dashboard(props) {
                     data: {
                         deletedId: userId,
                         projectId: projectId,
+                        projectName: projectName
                     },
                     url: "/api/deleteUserFromProject",
                     withCredentials: true,
@@ -688,7 +738,7 @@ function Dashboard(props) {
     }
 
 
-    async function assignUserToIssue(issueId, projectId, addedId) {
+    async function assignUserToIssue(issueId, projectId, addedId, title) {
         setIsLoadingIssue(true)
         await checkExpiry();
         if (localStorage.getItem("accessToken")) {
@@ -700,7 +750,8 @@ function Dashboard(props) {
                 data: {
                     issueId: issueId,
                     projectId: projectId,
-                    addedUserId: addedId
+                    addedUserId: addedId,
+                    issueTitle: title
                 },
                 url: "/api/assignUserToIssue",
                 withCredentials: true,
@@ -709,7 +760,7 @@ function Dashboard(props) {
                 if (res.status === 200) {
                     setCurrentIssue(res.data);
                     console.log("Assigned user to issue!");
-                    socket.emit('assignUserIssue', { project: currentProject, userId: currentUser._id, issue: res.data });
+                    socket.emit('assignUserIssue', { project: currentProject, addedId: addedId });
                 }
             }).catch(error => {
                 setIsLoadingIssue(false);
@@ -718,7 +769,7 @@ function Dashboard(props) {
         }
     }
 
-    async function removeUserFromIssue(issueId, projectId, removedId) {
+    async function removeUserFromIssue(issueId, projectId, removedId, title) {
         setIsLoadingIssue(true)
         await checkExpiry();
         const deleteOption = window.confirm("Confirm Deletion?");
@@ -732,7 +783,8 @@ function Dashboard(props) {
                     data: {
                         issueId: issueId,
                         projectId: projectId,
-                        removedUserId: removedId
+                        removedUserId: removedId,
+                        issueTitle: title
                     },
                     url: "/api/removeUserFromIssue",
                     withCredentials: true,
@@ -741,6 +793,7 @@ function Dashboard(props) {
                     if (res.status === 200) {
                         setCurrentIssue(res.data);
                         console.log("Removed user from issue!");
+                        socket.emit('removeUserIssue', { project: currentProject, removedId: removedId, issueId: issueId });
                     }
                 }).catch(error => {
                     setIsLoadingIssue(false);
@@ -750,7 +803,7 @@ function Dashboard(props) {
         }
     }
 
-    async function handleAddComment(issueId, comment) {
+    async function handleAddComment(issueId, comment, title) {
         setIsLoadingIssue(true)
         await checkExpiry();
         if (localStorage.getItem("accessToken")) {
@@ -761,7 +814,8 @@ function Dashboard(props) {
                 method: "POST",
                 data: {
                     issueId: issueId,
-                    commentDetail: comment
+                    commentDetail: comment,
+                    issueTitle: title
                 },
                 url: "/api/addCommentToIssue",
                 withCredentials: true,
@@ -808,22 +862,92 @@ function Dashboard(props) {
             })
         }
     }
+
+    async function handleDeleteNoti(e, noti) {
+        await checkExpiry();
+        if (localStorage.getItem("accessToken")) {
+            axios({
+                headers: {
+                    Authorization: "Bearer " + localStorage.getItem("accessToken"),
+                },
+                method: "DELETE",
+                data: {
+                    notiId: noti._id
+                },
+                url: "/api/deleteNotifications",
+                withCredentials: true,
+            }).then(res => {
+                if (res.status === 200) {
+                    setNoti(res.data.notifications);
+                    console.log("Deleted notification(s)!");
+                }
+            }).catch(error => {
+                setDisplayError(error.response.data);
+            })
+        }
+    }
+
+    async function handleReadNoti() {
+        await checkExpiry();
+        if (localStorage.getItem("accessToken")) {
+            axios({
+                headers: {
+                    Authorization: "Bearer " + localStorage.getItem("accessToken"),
+                },
+                method: "PUT",
+                data: {
+
+                },
+                url: "/api/setReadNotifications",
+                withCredentials: true,
+            }).then(res => {
+                if (res.status === 200) {
+                    setNoti(res.data.notifications);
+                    console.log(res.data.notifications);
+                }
+            }).catch(error => {
+                setDisplayError(error.response.data);
+            })
+        }
+    }
+
+    function checkAdminOrAssigned(currentProject, currentIssue) {
+        const check = currentProject.admins.filter(admin => admin._id === currentUser._id);
+        if (check.length === 1) {
+            return true
+        } else {
+            const check2 = currentIssue.users.filter(user => user === currentUser._id);
+            if (check2.length === 1) {
+                return true
+
+            } else {
+                return false
+            }
+        }
+    }
     return (
         <div >
             {isAuthenticated && currentUser ?
                 <>
+                    {/* Allow pop up when there is error */}
                     {displayError ?
                         <PopUp
                             type="error"
                             content={displayError}
                             handleClick={() => setDisplayError(null)}
+
                         /> : null}
 
-
+                    {/* Navigation bar */}
                     <NavBar
                         name={currentUser ? currentUser.name : ""}
                         handleLogOut={handleLogOut}
-                        loading={isLoadingLogOut} />
+                        loading={isLoadingLogOut}
+                        noti={noti}
+                        width={width}
+                        handleDeleteNoti={handleDeleteNoti}
+                        handleReadNoti={handleReadNoti}
+                    />
 
                     <div className="row dashboard" style={displayError ? { opacity: 0.7, pointerEvents: "none" } : null}>
                         <div className="col-12 col-sm-5 col-md-4 display-column projects">
@@ -831,6 +955,7 @@ function Dashboard(props) {
                                 <h4 >Projects
                                     {isLoadingProject ? <div className="loader"></div> : null}
                                 </h4>
+                                {/* Pull out the create project form if the add button is clicked */}
                                 {isClickedCreateProject ?
                                     <form className=" form-create" onSubmit={handleSubmitNewProject}>
                                         <input type="text" placeholder="New Project Name"
@@ -843,10 +968,15 @@ function Dashboard(props) {
                                             onClick={() => setIsClickedCreateProject(prev => !prev)}>
                                         </i>
                                     </form>
-                                    : <i className="far fa-plus-square"
+
+                                    :
+                                    //if not, show the add button
+                                    <i className="far fa-plus-square"
                                         onClick={() => setIsClickedCreateProject(prev => !prev)}>
                                     </i>}
                             </div>
+
+                            {/* Map out all projects that current user has */}
                             {currentUser.projects.map(project =>
                                 <DisplayProject
                                     key={project._id}
@@ -864,10 +994,10 @@ function Dashboard(props) {
                                     handleSmallScreenClickOnProject={() => {
                                         setDisplayIssesOnMobile(true);
                                         setCurrentIssueList(currentProject.issues);
-                                        console.log("Hello");
                                     }} />
                             )}
                         </div>
+                        {/* show the issues column if mobile width & user having a project open OR desktop width */}
                         {width < 580 && currentProject && displayIssuesOnMobile || width > 580 ?
                             <div className="col-12 col-sm-7 col-md-8 display-column issues">
                                 <div className="heading-wrapper">
@@ -883,7 +1013,7 @@ function Dashboard(props) {
                                             : null}
                                         {isLoadingIssue ? <div className="loader"></div> : null}
                                     </h4>
-
+                                    {/* if there arent any issue selected, taskbar will show options to sort the issue list */}
                                     {currentProject ? currentIssue ? null :
                                         <div style={{ display: "flex", justifyContent: "flex-end", width: "100%", height: "1rem" }}>
                                             <div className="select-wrapper" style={{ width: "10rem" }}>
@@ -907,7 +1037,7 @@ function Dashboard(props) {
                                                 </span>
 
                                             </div>
-
+                                            {/* the show done / hide done option when is in desktop width */}
                                             {width < 580 ? null :
                                                 showDone ?
                                                     <span
@@ -949,14 +1079,15 @@ function Dashboard(props) {
 
                                         </div> : null}
                                 </div>
-
+                                {/* when user has an active issue list & on mobile width */}
                                 {currentProject && width < 580 && !currentIssue ?
                                     <div className="heading-wrapper">
-
+                                        {/* go back arrow */}
                                         <i className="fas fa-arrow-left" onClick={() => {
                                             setDisplayIssesOnMobile(false);
                                         }}></i>
 
+                                        {/* show done / hide done options on mobile */}
                                         {showDone ?
                                             <span
                                                 className="state-indicator"
@@ -989,6 +1120,7 @@ function Dashboard(props) {
 
                                     : null}
 
+                                {/* show the add issue form if the user doesnt have an active issue */}
                                 {currentIssue ? null :
                                     <div className="form-issue-wrapper collapse " id="formIssue" >
                                         <div className="form-issue " >
@@ -1032,6 +1164,7 @@ function Dashboard(props) {
                                                     <i className="fas fa-long-arrow-alt-down"></i>
                                                 </span>
                                             </div>
+                                            <p style={{ marginTop: "2rem", marginBottom: 0, color: "#B1BAC7" }}>Deadline</p>
                                             <div className="select-wrapper date-select">
                                                 <input type="datetime-local"
                                                     className="edit-input"
@@ -1046,6 +1179,8 @@ function Dashboard(props) {
                                             </button>
                                         </div>
                                     </div>}
+
+                                {/* If an issue is chosen */}
                                 {currentIssue ?
                                     <DisplayIssue
                                         width={width}
@@ -1061,20 +1196,11 @@ function Dashboard(props) {
                                         handleAddComment={handleAddComment}
                                         handleDeleteComment={handleDeleteComment}
                                     /> :
-                                    currentProject ? showDone ? currentIssueList.map(issue =>
-                                        <>
-                                            <DisplayIssue
-                                                key={issue._id}
-                                                issue={issue}
-                                                currentUser={currentUser}
-                                                currentProject={currentProject}
-                                                clicked={false}
-                                                handleClick={handleClickOnIssue}
-                                            />
-                                        </>)
-                                        :
-                                        currentIssueList.filter(issue => issue.solved !== "Done").map(issue =>
-                                            <>
+                                    currentProject ? showDone ? currentIssueList.map(issue => {
+                                        //if the current user is the admin of the project OR an assigneduser return all issues
+                                        const check = checkAdminOrAssigned(currentProject, issue);
+                                        if (check === true) {
+                                            return (
                                                 <DisplayIssue
                                                     key={issue._id}
                                                     issue={issue}
@@ -1082,16 +1208,36 @@ function Dashboard(props) {
                                                     currentProject={currentProject}
                                                     clicked={false}
                                                     handleClick={handleClickOnIssue}
-                                                />
-                                            </>)
+                                                />)
+                                        }
+                                    })
                                         :
+                                        //when hide done is selected, filter all done issues
+                                        currentIssueList.filter(issue => issue.solved !== "Done").map(issue => {
+                                            const check = checkAdminOrAssigned(currentProject, issue);
+                                            if (check === true) {
+                                                return (
+                                                    <DisplayIssue
+                                                        key={issue._id}
+                                                        issue={issue}
+                                                        currentUser={currentUser}
+                                                        currentProject={currentProject}
+                                                        clicked={false}
+                                                        handleClick={handleClickOnIssue}
+                                                    />)
+                                            }
+                                        }
+                                        )
+                                        :
+                                        //if there isnt an active issue, tell user to select one
                                         <h5 style={{ fontSize: "1rem", padding: "0.5rem", color: "#B1BAC7" }}>
                                             Choose a project to view issues
                                         </h5>
                                 }
                             </div> : null}
                     </div>
-                </> : null}
+                </> : null
+            }
         </div >
     )
 }

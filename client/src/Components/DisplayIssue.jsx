@@ -19,10 +19,13 @@ function DisplayIssue(props) {
     const [isAssignedUser, setIsAssignedUser] = React.useState(false);
 
     React.useState(() => {
+
         if (projectAdmins) {
+            //filter to see if the current user is admin
             const check = projectAdmins.filter(admin => admin._id === props.currentUser._id)
             if (check.length === 0) {
                 setIsAdmin(false);
+                //else check if he/she is assigned
                 const check2 = users.filter(assignUser => assignUser._id === props.currentUser._id);
                 if (check2.length === 0) {
                     setIsAssignedUser(false);
@@ -34,6 +37,7 @@ function DisplayIssue(props) {
                 setIsAssignedUser(true);
             }
         }
+        checkDeadline();
     }, [])
 
     //function to convert string date to mmddyyyy
@@ -66,8 +70,6 @@ function DisplayIssue(props) {
             return "Deadline passed!"
         }
     }
-
-    checkDeadline()
     //Handling submission of editing an issue
     function handleEditConfirm(evt) {
         evt.preventDefault();
@@ -78,12 +80,12 @@ function DisplayIssue(props) {
 
     function handleAssignUserToIssue(evt) {
         evt.preventDefault();
-        props.assignUser(_id, props.currentProject._id, assignedUser)
+        props.assignUser(_id, props.currentProject._id, assignedUser, title)
     }
 
     function handleRemoveUser(id, evt) {
         evt.preventDefault();
-        props.removeUser(_id, props.currentProject._id, id.split("assigned")[1])
+        props.removeUser(_id, props.currentProject._id, id, title)
     }
 
     function handleClick() {
@@ -91,17 +93,18 @@ function DisplayIssue(props) {
     }
 
     function handleAddComment() {
-        props.handleAddComment(_id, addedComment);
+        props.handleAddComment(_id, addedComment, title);
         setAddedComment("");
     }
 
     function handleDeleteComment(commentId, evt) {
-        props.handleDeleteComment(_id, props.currentProject._id, commentId.split("comment")[1])
+        props.handleDeleteComment(_id, props.currentProject._id, commentId)
     }
     //create custom Id bc bootstrap doesnt support id starting with numbers
     const customId = "issueDes" + _id;
 
     return (
+
         <div className={props.clicked ? " issue-clicked display-content-wrapper" : "display-content-wrapper"}>
             <div className="content-section">
                 {isClickedEdit ?
@@ -156,13 +159,20 @@ function DisplayIssue(props) {
                             : null}
 
                         {isAdmin ?
-                            <div className="select-wrapper date-select">
-                                <input type="datetime-local" className="edit-input"
-                                    style={{ width: "100%", paddingRight: "0" }}
-                                    onChange={evt => setModifiedIssueDeadline(evt.target.value)}>
-                                </input>
-                                <i className="far fa-calendar-alt" style={{ background: "#12111a" }}></i>
-                            </div> : null}
+                            <>
+                                <p style={{ marginTop: "2rem" }}>Deadline</p>
+                                <div className="select-wrapper date-select">
+                                    <input type="datetime-local" className="edit-input"
+                                        style={{ width: "100%", paddingRight: "0" }}
+                                        placeholder="Deadline"
+                                        onChange={evt => setModifiedIssueDeadline(evt.target.value)}>
+                                    </input>
+
+                                    <i className="far fa-calendar-alt" style={{ background: "#12111a" }}
+                                    ></i>
+                                </div>
+                            </>
+                            : null}
 
                         <button className="function-button button-medium"
                             onClick={handleEditConfirm}>
@@ -215,8 +225,8 @@ function DisplayIssue(props) {
 
 
                 {props.clicked ?
-                    <div className={width < 580 ? "" : "icon-wrapper"} 
-                    style={{ display: width < 580 ?"flex":"", flexDirection:width < 580 ? "column":"", alignItems: "center" }}
+                    <div className={width < 580 ? "" : "icon-wrapper"}
+                        style={{ display: width < 580 ? "flex" : "", flexDirection: width < 580 ? "column" : "", alignItems: "center" }}
                     >
                         {isAdmin ?
                             <div className="icon-wrapper" style={{ margin: width < 580 ? "0.8rem 0 0.8rem 0" : "" }}>
@@ -279,8 +289,8 @@ function DisplayIssue(props) {
                                         </p>
                                         {isAdmin ?
                                             <div className="icon-wrapper">
-                                                <i className="fas fa-user-minus small-icon" id={"assigned" + user._id}
-                                                    onClick={e => handleRemoveUser("assigned" + user._id, e)}>
+                                                <i className="fas fa-user-minus small-icon"
+                                                    onClick={e => handleRemoveUser(user._id, e)}>
                                                 </i>
                                             </div> : null}
                                     </span>)}
@@ -338,7 +348,7 @@ function DisplayIssue(props) {
                                     required>
                                 </textarea>
                                 <button className="function-button button-small"
-                                    onClick={handleAddComment}>                 
+                                    onClick={handleAddComment}>
                                     Add
                                 </button>
                             </div>
@@ -349,9 +359,7 @@ function DisplayIssue(props) {
                                 {isAdmin ?
                                     <div className="icon-wrapper">
                                         <i className="far fa-trash-alt small-icon"
-                                            id={"comment" + comment._id}
-                                            onClick={e => handleDeleteComment("comment" + comment._id, e)} >
-
+                                            onClick={e => handleDeleteComment(comment._id, e)} >
                                         </i>
                                     </div>
                                     : null}
@@ -368,8 +376,7 @@ function DisplayIssue(props) {
                         ) : null}
                     </div>
                 </div> : null}
-        </div >
-
+        </div>
     )
 }
 

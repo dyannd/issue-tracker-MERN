@@ -30,7 +30,7 @@ function DisplayProject(props) {
         props.handleEdit(_id, newName);
         setIsClickedEdit(false);
     }
-
+    
     //Passing the project id to the dashboard function 
     function handleClick() {
         props.handleClick(_id)
@@ -38,16 +38,17 @@ function DisplayProject(props) {
 
     function handleAddUserToProject(evt) {
         evt.preventDefault();
+        props.addUser(_id, name, addedEmail, addedRole)
         setAddedEmail("");
-        props.addUser(_id, addedEmail, addedRole)
+        setAddedRole("");
     }
 
     function handleDeleteUser(id, evt) {
         evt.preventDefault();
-        props.deleteUser(id.split("added")[1], _id)
+        props.deleteUser(id.split("added")[1], _id, name)
     }
 
-    function handleSmallScreenClickOnProject(){
+    function handleSmallScreenClickOnProject() {
         props.handleSmallScreenClickOnProject();
     }
     //create custom Id bc bootstrap doesnt support id starting with numbers
@@ -89,10 +90,10 @@ function DisplayProject(props) {
                                 aria-controls={customId}
                             >
                             </i>
-                            {width < 580? 
-                            <i className="fas fa-clipboard-list"
-                            onClick={handleSmallScreenClickOnProject}
-                            ></i>:null}
+                            {width < 580 ?
+                                <i className="fas fa-clipboard-list"
+                                    onClick={handleSmallScreenClickOnProject}
+                                ></i> : null}
                         </> : null}
                 </div>
             </div>
@@ -137,7 +138,7 @@ function DisplayProject(props) {
                             </div>
                             <button type="submit"
                                 className="button-small"
-                                style={{ border: "none", background: "#1B1C30", color: "#B1BAC7", fontWeight:"bold" }}>
+                                style={{ border: "none", background: "#1B1C30", color: "#B1BAC7", fontWeight: "bold" }}>
                                 Add
                             </button>
                         </form>
@@ -155,6 +156,9 @@ function DisplayProject(props) {
                                 </span>
                                 {admin.name === currentUser.name ? "You" : admin.name}
                             </p>
+                            <i className="fas fa-user-minus small-icon" id={"added" + admin._id}
+                                onClick={e => handleDeleteUser("added" + admin._id, e)}>
+                            </i>
                         </div>
                     ) : null : null}
                     {props.clicked ? users ? users.map(user =>

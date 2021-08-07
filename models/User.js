@@ -64,6 +64,23 @@ const projectSchema = new mongoose.Schema({
     issues: [{ type: mongoose.Schema.Types.ObjectId, ref: 'issues' }]
 
 })
+
+
+const notiSchema = new mongoose.Schema({
+    content: {
+        type: String
+    },
+    date: {
+        type: Date,
+        default: Date.now
+    },
+    read: {
+        type: Number,
+        default: 0
+    }
+})
+
+
 const userSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -84,6 +101,8 @@ const userSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
+
+    notifications: [notiSchema],
 
     projects: [{ type: mongoose.Schema.Types.ObjectId, ref: 'projects' }]
 

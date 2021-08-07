@@ -344,7 +344,9 @@ router.put("/modifyIssue", verify, (req, res) => {
                                 }
                             }, { new: true })
                             .populate('users', 'name email')
-                            .then(issue => res.status(200).json(issue))
+                            .then(issue => {
+                                res.status(200).json(issue);
+                            })
                             .catch(err1 => res.status(400).json(err1))
                     } else {
                         //if not the admin, check if the  user is assigned to the issue
@@ -452,7 +454,7 @@ router.post("/addUserToProject", verify, (req, res) => {
                             res.status(400).json("User already added!")
                         } else {
                             foundUser.projects.push(mongoose.Types.ObjectId(req.body.projectId))
-                            foundUser
+                            foundUser.notifications.push({ content: req.user.name + " added you to project " + req.body.projectName })
                                 .save()
                                 .then(foundUser => {
                                     Project.findByIdAndUpdate(req.body.projectId, {
@@ -460,6 +462,7 @@ router.post("/addUserToProject", verify, (req, res) => {
                                         }, { new: true })
                                         .populate('admins', 'name email')
                                         .populate('users', 'name email')
+                                        .populate('issues')
                                         .then(project => {
                                             if (project) {
                                                 res.status(200).json(project)
@@ -475,6 +478,7 @@ router.post("/addUserToProject", verify, (req, res) => {
                             res.status(400).json("User already added!")
                         } else {
                             foundUser.projects.push(mongoose.Types.ObjectId(req.body.projectId))
+                            foundUser.notifications.push({ content: req.user.name + " added you to project " + req.body.projectName })
                             foundUser.save()
                                 .then(
                                     Project.findByIdAndUpdate(req.body.projectId, {
@@ -482,6 +486,7 @@ router.post("/addUserToProject", verify, (req, res) => {
                                     }, { new: true })
                                     .populate('admins', 'name email')
                                     .populate('users', 'name email')
+                                    .populate('issues')
                                     .then(project => {
                                         if (project) {
                                             res.status(200).json(project)
@@ -524,6 +529,9 @@ router.delete("/deleteUserFromProject", verify, (req, res) => {
                                         User.findByIdAndUpdate(req.body.deletedId, {
                                             $pull: {
                                                 "projects": project._id
+                                            },
+                                            $push: {
+                                                "notifications": { content: req.user.name + " removed you from project: " + req.body.projectName }
                                             }
                                         }, { new: true })
 
@@ -553,6 +561,9 @@ router.delete("/deleteUserFromProject", verify, (req, res) => {
                                         User.findByIdAndUpdate(req.body.deletedId, {
                                                 $pull: {
                                                     "projects": project._id
+                                                },
+                                                $push: {
+                                                    "notifications": { content: req.user.name + " removed you from project: " + req.body.projectName }
                                                 }
                                             }, { new: true })
                                             .then(
@@ -598,13 +609,20 @@ router.post("/assignUserToIssue", verify, (req, res) => {
                                 if (issue.users.includes(req.body.addedUserId)) {
                                     res.status(400).json("User already assigned")
                                 } else {
-                                    issue.users.push(mongoose.Types.ObjectId(req.body.addedUserId))
-                                    issue.save()
-                                        .then(iss => {
-                                            iss.populate('users', 'name email').execPopulate()
-                                                .then(returnIssue => res.status(200).json(returnIssue))
-                                                .catch(err1 => res.status(400).json(err1))
-                                        }).catch(err2 => res.status(400).json(err2))
+                                    User.findByIdAndUpdate(req.body.addedUserId, {
+                                            $push: {
+                                                "notifications": { content: req.user.name + " assigned you an issue: " + req.body.issueTitle }
+                                            }
+                                        })
+                                        .then(user => {
+                                            issue.users.push(mongoose.Types.ObjectId(req.body.addedUserId))
+                                            issue.save()
+                                                .then(iss => {
+                                                    iss.populate('users', 'name email').execPopulate()
+                                                        .then(returnIssue => res.status(200).json(returnIssue))
+                                                        .catch(err1 => res.status(400).json(err1))
+                                                }).catch(err2 => res.status(400).json(err2))
+                                        }).catch(err5 => res.status(400).json(err5))
                                 }
                             }).catch(err3 => res.status(400).json(err3))
                     } else {
@@ -628,13 +646,21 @@ router.delete("/removeUserFromIssue", verify, (req, res) => {
                 if (project) {
                     //check if the current user is the admin of the project
                     if (project.admins.includes(mongoose.Types.ObjectId(req.user.id))) {
-                        // if the user is the admin, then remove the user from the issue
-                        Issue.findByIdAndUpdate(req.body.issueId, {
+                        // if the requested user is the admin, then remove the user from the issue
+                        //add noti for that user
+                        User.findByIdAndUpdate(req.body.removedUserId, {
+                            $push: {
+                                "notifications": { content: req.user.name + " removed you from issue: " + req.body.issueTitle }
+                            }
+                        }).then(
+                            Issue.findByIdAndUpdate(req.body.issueId, {
                                 $pull: { "users": req.body.removedUserId }
                             }, { new: true })
                             .populate('users', 'name email')
                             .then(issue => res.status(200).json(issue))
                             .catch(err1 => res.status(400).json(err1))
+                        ).catch(err3 => res.status(400).json(err3))
+
                     } else {
                         res.status(403).json("You are not the admin!")
                     }
@@ -661,7 +687,19 @@ router.post("/addCommentToIssue", verify, (req, res) => {
                 $push: { 'comments': newComment }
             }, { new: true })
             .populate('users', 'name email')
-            .then(issue => res.status(200).json(issue))
+            .then(issue => {
+                res.status(200).json(issue);
+                issue.users.map(user => {
+                    console.log(user);
+                    if (user._id !== req.user.id) {
+                        User.findByIdAndUpdate(user._id, {
+                            $push: {
+                                "notifications": { content: req.user.name + " added a comment on issue: " + req.body.issueTitle }
+                            }
+                        }).then(usr => console.log(usr)).catch(err => console.log(err))
+                    }
+                })
+            })
             .catch(err1 => res.status(400).json(err1))
     }
 })
@@ -689,4 +727,34 @@ router.delete("/deleteCommentFromIssue", verify, (req, res) => {
     }
 })
 
+router.delete("/deleteNotifications", verify, (req, res) => {
+    if (!req.user) {
+        res.status(401).json("You are not authenticated");
+    } else {
+        User.findByIdAndUpdate(req.user.id, {
+                $pull: { "notifications": { _id: req.body.notiId } }
+            }, { new: true })
+            .then(user => {
+                res.status(200).json(user)
+            })
+            .catch(err => res.status(400).json(err))
+    }
+})
+
+router.put("/setReadNotifications", verify, (req, res) => {
+    if (!req.user) {
+        res.status(401).json("You are not authenticated");
+    } else {
+        User.findByIdAndUpdate(req.user.id, {
+                $set: {
+                    "notifications.$[].read": 1
+                }
+
+            }, { new: true })
+            .then(user => {
+                res.status(200).json(user)
+            })
+            .catch(err => res.status(400).json(err))
+    }
+})
 module.exports = router;

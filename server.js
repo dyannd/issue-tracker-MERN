@@ -15,6 +15,7 @@ const io = require('socket.io')(http, {
 });
 // Load User model
 const User = require("./models/User").User;
+const Project = require("./models/User").Project;
 
 
 //DB
@@ -113,6 +114,24 @@ io.on('connection', (socket) => {
         //send the update to those people
         usersInProjectOnline.map(onliner => {
             socket.to(onliner.socketId).emit("createIssueRealtime", project);
+
+        })
+    })
+
+    socket.on('modifyIssue', (data) => {
+        const { project, userId, issue } = data;
+        //check if any current user in the project is also online;
+        let allUsersInProject = project.users.map(user => user._id);
+        let allAdminsInProject = project.admins.map(admin => admin._id);
+        //all the people not including the one editing the project
+        let projectPeople = allUsersInProject.concat(allAdminsInProject).filter(all => all !== userId);
+        //now determine all people in the project that are online
+        let usersInProjectOnline = connectedUsers.filter(connectedUser =>
+            projectPeople.includes(connectedUser.id));
+        console.log(usersInProjectOnline);
+        //send the update to those people
+        usersInProjectOnline.map(onliner => {
+            socket.to(onliner.socketId).emit("modifyIssueRealtime", { projectData: project, issueData: issue });
         })
     })
 
@@ -138,37 +157,43 @@ io.on('connection', (socket) => {
 
     })
 
-    socket.on('modifyIssue', (data) => {
-        const { project, userId, issue } = data;
-        //check if any current user in the project is also online;
-        let allUsersInProject = project.users.map(user => user._id);
-        let allAdminsInProject = project.admins.map(admin => admin._id);
-        //all the people not including the one editing the project
-        let projectPeople = allUsersInProject.concat(allAdminsInProject).filter(all => all !== userId);
-        //now determine all people in the project that are online
+
+    socket.on('assignUserIssue', data => {
+        const { project, addedId } = data;
+        console.log("Helloooo");
+        //now determine if the added user is online
         let usersInProjectOnline = connectedUsers.filter(connectedUser =>
-            projectPeople.includes(connectedUser.id));
-        console.log(usersInProjectOnline);
-        //send the update to those people
+            connectedUser.id === addedId);
+
+        //send the update to that user
         usersInProjectOnline.map(onliner => {
-            socket.to(onliner.socketId).emit("modifyIssueRealtime", { projectData: project, issueData: issue });
+            Project.findById(project._id)
+                .populate('issues')
+                .then(proj => {
+                    socket.to(onliner.socketId).emit("assignUserIssueRealtime", proj);
+                    User.findById(onliner.id).then(user => {
+                        socket.to(onliner.socketId).emit("updateNoti", user);
+                    })
+                })
         })
     })
 
-    socket.on('assignUserIssue', data => {
-        const { project, userId, issue } = data;
-        //check if any current user in the project is also online;
-        let allUsersInProject = project.users.map(user => user._id);
-        let allAdminsInProject = project.admins.map(admin => admin._id);
-        //all the people not including the one editing the project
-        let projectPeople = allUsersInProject.concat(allAdminsInProject).filter(all => all !== userId);
-        //now determine all people in the project that are online
+    socket.on('removeUserIssue', data => {
+        const { project, removedId, issueId } = data;
+        //now determine if the removed user is online
         let usersInProjectOnline = connectedUsers.filter(connectedUser =>
-            projectPeople.includes(connectedUser.id));
-        console.log(usersInProjectOnline);
-        //send the update to those people
+            connectedUser.id === removedId);
+
+        //send the update to that user
         usersInProjectOnline.map(onliner => {
-            socket.to(onliner.socketId).emit("assignUserIssueRealtime", { projectData: project, issueData: issue });
+            Project.findById(project._id)
+                .populate('issues')
+                .then(proj => {
+                    socket.to(onliner.socketId).emit("removeUserIssueRealtime", { projectData: proj, issueId: issueId });
+                    User.findById(onliner.id).then(user => {
+                        socket.to(onliner.socketId).emit("updateNoti", user);
+                    })
+                })
         })
     })
 
@@ -190,6 +215,9 @@ io.on('connection', (socket) => {
         //send the update to those people
         usersInProjectOnline.map(onliner => {
             socket.to(onliner.socketId).emit("modifyCommentRealtime", { projectData: project, issueData: issue });
+            User.findById(onliner.id).then(user => {
+                socket.to(onliner.socketId).emit("updateNoti", user);
+            })
         })
     })
 

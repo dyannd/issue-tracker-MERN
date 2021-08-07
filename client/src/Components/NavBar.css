@@ -26,3 +26,77 @@
     margin: auto;
     margin-left: 0;
 }
+
+.notification-button {
+    position: relative;
+    width: 2rem !important;
+    height: 100%;
+}
+
+.notification-counter {
+    width: 1.2rem;
+    height: 1.2rem;
+    background: #BF4B54;
+    border-radius: 100%;
+    position: absolute;
+    z-index: 1000;
+    top: 0;
+    right: 0;
+    display: flex;
+    pointer-events: none;
+}
+
+.notification-counter>p {
+    margin: auto;
+    font-size: 0.9rem;
+}
+
+.noti-menu {
+    width: 21rem;
+    height: 50vh;
+    position: absolute;
+    right: 0;
+    top: 8vh;
+    z-index: 1000;
+    background: #191c32;
+    background-image: url("https://www.transparenttextures.com/patterns/dark-fish-skin.png");
+    overflow-y: scroll;
+}
+
+.noti-menu::-webkit-scrollbar {
+    width: 10px;
+}
+
+.noti-menu::-webkit-scrollbar-thumb {
+    background: #B1BAC7;
+    border-radius: 10px;
+}
+
+.noti-menu>ul {
+    list-style: none;
+    display: grid;
+    grid-gap: 0.5rem;
+    padding: 0.5rem;
+}
+
+.noti-item {
+    width: 100%;
+    min-height: 5rem;
+    font-size: 0.9rem;
+    padding: 0.5rem 0;
+    padding-left: 0.5rem;
+    transition: all 3s;
+    border-bottom: solid 2px #B1BAC7;
+    justify-content: space-between;
+}
+
+.noti-item>i {
+    margin-top: 0.2rem;
+    color: #BF4B54;
+}
+
+@media (max-width: 580px) {
+    .noti-menu {
+        width: 100vw;
+    }
+}

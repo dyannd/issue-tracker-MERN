@@ -19,6 +19,8 @@ display-content: flex vertically
     overflow: hidden;
     font-family: "Mulish", sans-serif;
     width: 100%;
+    position: absolute;
+    top: 8vh;
     min-height: 92vh;
     /**bc the navbar is 8vh**/
     margin: 0;
@@ -33,6 +35,7 @@ display-content: flex vertically
     padding: 0.5rem;
     border-color: #B1BAC7;
     border-width: 0.02rem;
+    min-height: 92vh;
 }
 
 
@@ -139,6 +142,10 @@ i {
 .form-issue textarea:focus {
     outline: none;
     border-color: #91DEFB;
+}
+
+.form-issue p {
+    font-size: 0.8rem;
 }
 
 input [ type="datetime-local"] {
@@ -503,13 +510,13 @@ textarea {
         font-size: 1.3rem;
     }
     .display-content-wrapper h5 {
-        font-size: 1.2rem;
-    }
-    .display-content-wrapper h6 {
         font-size: 1.1rem;
     }
+    .display-content-wrapper h6 {
+        font-size: 1rem;
+    }
     .display-content-wrapper p {
-        font-size: 0.9rem;
+        font-size: 0.8rem;
     }
     .state-indicator {
         height: 1.8rem;
@@ -519,9 +526,12 @@ textarea {
     }
     .edit-input,
     .edit-input-color2 {
-        font-size: 0.9rem;
+        font-size: 0.8rem;
         height: 2rem;
         margin: 0.5rem 0;
+    }
+    .edit-input::placeholder {
+        font-size: 0.8rem;
     }
     textarea.edit-input {
         height: 6rem;

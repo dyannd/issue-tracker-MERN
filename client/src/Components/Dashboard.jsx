@@ -34,7 +34,7 @@ function Dashboard(props) {
     const [displayIssuesOnMobile, setDisplayIssesOnMobile] = useState(false);
     const [noti, setNoti] = useState([]);
     const history = useHistory();
-    const SERVER = "https://mernissuetracker.herokuapp.com/";
+    const SERVER = "https://itrack-backend.onrender.com";
     // "https://mernissuetracker.herokuapp.com/"
     // "localhost:8888/";
     const socket = io(SERVER);

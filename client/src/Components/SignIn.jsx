@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import './SignIn.css';
 import axios from 'axios';
-import { BrowserRouter as Router, Route, Switch, useHistory } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useHistory } from 'react-router-dom';
+import './SignIn.css';
 
 function SignIn(props) {
   const history = useHistory();

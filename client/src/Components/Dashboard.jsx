@@ -1,13 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import { BrowserRouter as Router, Route, Switch, useHistory, Redirect } from 'react-router-dom';
-import NavBar from './NavBar';
 import jwt_decode from 'jwt-decode';
-import DisplayProject from './DisplayProject';
-import DisplayIssue from './DisplayIssue';
-import PopUp from './PopUp';
-import './Dashboard.css';
+import React, { useEffect, useRef, useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import io from 'socket.io-client';
+import './Dashboard.css';
+import DisplayIssue from './DisplayIssue';
+import DisplayProject from './DisplayProject';
+import NavBar from './NavBar';
+import PopUp from './PopUp';
 
 
 function Dashboard(props) {
